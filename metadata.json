@@ -1,0 +1,5 @@
+{
+  "name": "TechWiser – AI Website & App Builder",
+  "description": "A futuristic AI-powered platform to build, preview, and refine websites and apps using natural language.",
+  "requestFramePermissions": ["microphone"]
+}
