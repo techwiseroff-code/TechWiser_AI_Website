@@ -92,16 +92,18 @@ const callOpenRouter = async (prompt: string, history: any[], config: AIConfig):
   try {
     return JSON.parse(content);
   } catch (e) {
-    console.error("Failed to parse OpenRouter response", e);
     // Try to extract JSON if wrapped in markdown
-    const jsonMatch = content.match(/```(?:json)?\s*?([\s\S]*?)```/) || content.match(/\{[\s\S]*\}/);
+    const jsonMatch = content.match(/```(?:json)?\s*([\s\S]*?)```/) || content.match(/\{[\s\S]*\}/);
     if (jsonMatch) {
+      const extractedContent = jsonMatch[1] !== undefined ? jsonMatch[1] : jsonMatch[0];
       try {
-        return JSON.parse(jsonMatch[1] || jsonMatch[0]);
+        return JSON.parse(extractedContent);
       } catch (parseAttemptError) {
-        throw new Error("Could not parse the generated code structure. Please try again.");
+        console.error("Failed to parse extracted JSON:", parseAttemptError, extractedContent.substring(0, 100));
+        throw new Error("Could not parse the AI's generated code structure. Please try again.");
       }
     }
+    console.error("Failed to parse OpenRouter response", e, content.substring(0, 100));
     throw new Error("Invalid format returned from AI model. Please try again.");
   }
 };

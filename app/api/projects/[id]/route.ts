@@ -14,6 +14,7 @@ export async function DELETE(
     try {
       const data = await fs.readFile(DB_PATH, 'utf-8');
       projects = data ? JSON.parse(data) : [];
+      if (!Array.isArray(projects)) projects = [];
     } catch {
       projects = [];
     }
@@ -22,6 +23,7 @@ export async function DELETE(
     await fs.writeFile(DB_PATH, JSON.stringify(projects, null, 2));
     return NextResponse.json({ success: true });
   } catch (error) {
+    console.error(`DELETE /api/projects error:`, error);
     return NextResponse.json({ error: 'Failed to delete project' }, { status: 500 });
   }
 }
@@ -37,6 +39,7 @@ export async function PATCH(
     try {
       const data = await fs.readFile(DB_PATH, 'utf-8');
       projects = data ? JSON.parse(data) : [];
+      if (!Array.isArray(projects)) projects = [];
     } catch {
       projects = [];
     }
@@ -52,6 +55,7 @@ export async function PATCH(
 
     return NextResponse.json(projects[index]);
   } catch (error) {
+    console.error(`PATCH /api/projects error:`, error);
     return NextResponse.json({ error: 'Failed to update project' }, { status: 500 });
   }
 }
