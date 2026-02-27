@@ -21,19 +21,22 @@ export const metadata: Metadata = {
 import { LanguageProvider } from '@/context/LanguageContext';
 import { SettingsProvider } from '@/context/SettingsContext';
 import { AuthProvider } from '@/context/AuthContext';
+import { ConvexClientProvider } from './ConvexClientProvider';
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="en" className={`${inter.variable} ${spaceGrotesk.variable}`}>
       <body className="bg-[#050505] text-white antialiased selection:bg-emerald-500/30" suppressHydrationWarning>
-        <SettingsProvider>
-          <AuthProvider>
-            <LanguageProvider>
-              {children}
-              <Analytics />
-            </LanguageProvider>
-          </AuthProvider>
-        </SettingsProvider>
+        <ConvexClientProvider>
+          <SettingsProvider>
+            <AuthProvider>
+              <LanguageProvider>
+                {children}
+                <Analytics />
+              </LanguageProvider>
+            </AuthProvider>
+          </SettingsProvider>
+        </ConvexClientProvider>
       </body>
     </html>
   );

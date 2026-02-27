@@ -20,6 +20,8 @@ import { LandingPage } from '@/components/LandingPage';
 import { SettingsModal } from '@/components/SettingsModal';
 import { AuthModal } from '@/components/AuthModal';
 import { OnboardingOverlay } from '@/components/OnboardingOverlay';
+import { useQuery, useMutation } from 'convex/react';
+import { api } from '../convex/_generated/api';
 
 interface Project {
   id: string;
@@ -34,10 +36,9 @@ export default function Home() {
   const { t } = useLanguage();
   const { openRouterKey, geminiKey, selectedModel, useCustomGemini } = useSettings();
   const { user } = useAuth();
+  const userToken = user?.id || 'anonymous-user';
 
   const [isLoading, setIsLoading] = useState(false);
-  const [isProjectsLoading, setIsProjectsLoading] = useState(true);
-  const [projects, setProjects] = useState<Project[]>([]);
   const [currentProjectId, setCurrentProjectId] = useState<string | null>(null);
   const [viewMode, setViewMode] = useState<'split' | 'preview' | 'code'>('split');
   const [toasts, setToasts] = useState<Toast[]>([]);
@@ -48,32 +49,34 @@ export default function Home() {
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
 
+  // Convex hooks
+  const convexWorkspaces = useQuery(api.workspace.GetAllWorkspaces, { userToken });
+  const createWorkspace = useMutation(api.workspace.CreateWorkspace);
+  const updateWorkspace = useMutation(api.workspace.UpdateWorkspace);
+  const updateFiles = useMutation(api.workspace.UpdateFiles);
+  const deleteWorkspace = useMutation(api.workspace.DeleteWorkspace);
+
+  const projects = convexWorkspaces?.map(w => ({
+    id: w._id,
+    title: w.messages?.[0]?.content?.slice(0, 30) || 'New Project',
+    date: new Date(w._creationTime).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+    files: w.fileData || [],
+    lastPrompt: w.messages?.[w.messages.length - 2]?.content || '',
+    chatHistory: w.messages || []
+  })) || [];
+
+  const isProjectsLoading = convexWorkspaces === undefined;
+
   const currentProject = projects.find(p => p.id === currentProjectId);
   const files = currentProject?.files || [];
 
   // Fetch projects from backend on mount
   useEffect(() => {
-    const fetchProjects = async () => {
-      try {
-        setIsProjectsLoading(true);
-        const response = await fetch('/api/projects');
-        if (response.ok) {
-          const data = await response.json();
-          setProjects(data);
-          if (data.length > 0) {
-            setCurrentProjectId(data[0].id);
-            setShowWorkspace(true);
-          }
-        }
-      } catch (e) {
-        console.error("Failed to fetch projects", e);
-        addToast("Failed to connect to server", "error");
-      } finally {
-        setIsProjectsLoading(false);
-      }
-    };
-    fetchProjects();
-  }, []);
+    if (convexWorkspaces && convexWorkspaces.length > 0 && !currentProjectId && !showWorkspace) {
+      setCurrentProjectId(convexWorkspaces[0]._id);
+      setShowWorkspace(true);
+    }
+  }, [convexWorkspaces]);
 
   const addToast = (message: string, type: 'success' | 'error' | 'info' = 'success') => {
     const id = Math.random().toString(36).substring(2, 9);
@@ -106,46 +109,33 @@ export default function Home() {
       const newHistory = [
         ...history,
         { role: 'user', content: message },
-        { role: 'model', content: result.description } // Using description as summary
+        { role: 'model', content: result.description || 'Generated code' } // Using description as summary
       ];
 
-      const projectData = {
-        title: currentProject ? currentProject.title : (message.slice(0, 30) + (message.length > 30 ? '...' : '')),
-        date: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-        files: result.files,
-        lastPrompt: message,
-        chatHistory: newHistory
-      };
-
-      let response;
       if (currentProjectId) {
         // Update existing project
-        response = await fetch(`/api/projects/${currentProjectId}`, {
-          method: 'PATCH',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(projectData),
+        await updateWorkspace({
+          workspaceId: currentProjectId as any,
+          messages: newHistory
+        });
+        await updateFiles({
+          workspaceId: currentProjectId as any,
+          files: result.files
         });
       } else {
         // Create new project
-        response = await fetch('/api/projects', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(projectData),
+        const newId = await createWorkspace({
+          messages: newHistory,
+          userToken
         });
+        await updateFiles({
+          workspaceId: newId as any,
+          files: result.files
+        });
+        setCurrentProjectId(newId);
       }
 
-      if (response.ok) {
-        const savedProject = await response.json();
-        if (currentProjectId) {
-          setProjects(prev => prev.map(p => p.id === currentProjectId ? savedProject : p));
-        } else {
-          setProjects(prev => [savedProject, ...prev]);
-          setCurrentProjectId(savedProject.id);
-        }
-        addToast("Project generated successfully!");
-      } else {
-        throw new Error("Failed to save project");
-      }
+      addToast("Project generated successfully!");
     } catch (error: any) {
       console.error("Generation failed:", error);
       addToast(error.message || "Failed to generate project. Please try again.", "error");
@@ -162,20 +152,17 @@ export default function Home() {
 
   const handleDeleteProject = async (id: string) => {
     try {
-      const response = await fetch(`/api/projects/${id}`, { method: 'DELETE' });
-      if (response.ok) {
-        setProjects(prev => prev.filter(p => p.id !== id));
-        if (currentProjectId === id) {
-          const remaining = projects.filter(p => p.id !== id);
-          if (remaining.length > 0) {
-            setCurrentProjectId(remaining[0].id);
-          } else {
-            setCurrentProjectId(null);
-            setShowWorkspace(false);
-          }
+      await deleteWorkspace({ workspaceId: id as any });
+      if (currentProjectId === id) {
+        const remaining = projects.filter((p: any) => p.id !== id);
+        if (remaining.length > 0) {
+          setCurrentProjectId(remaining[0].id);
+        } else {
+          setCurrentProjectId(null);
+          setShowWorkspace(false);
         }
-        addToast("Project deleted", "success");
       }
+      addToast("Project deleted", "success");
     } catch (e) {
       addToast("Failed to delete project", "error");
     }
@@ -196,15 +183,20 @@ export default function Home() {
   };
 
   const handleClearHistory = async () => {
-    setProjects([]);
-    setCurrentProjectId(null);
-    setShowWorkspace(false);
-    addToast("History cleared in UI", "success");
+    try {
+      // For clearing history, we map over projects and delete all belonging to the user
+      await Promise.all(projects.map((p: any) => deleteWorkspace({ workspaceId: p.id as any })));
+      setCurrentProjectId(null);
+      setShowWorkspace(false);
+      addToast("History cleared in Convex", "success");
+    } catch (e) {
+      addToast("Failed to clear history", "error");
+    }
   };
 
   const handleCopyCode = () => {
     if (files.length === 0) return;
-    const allCode = files.map(f => `// ${f.path}\n${f.content}`).join('\n\n');
+    const allCode = files.map((f: any) => `// ${f.path}\n${f.content}`).join('\n\n');
     navigator.clipboard.writeText(allCode);
     addToast("Code copied to clipboard!", "success");
   };
@@ -213,7 +205,7 @@ export default function Home() {
     if (files.length === 0) return;
 
     const zip = new JSZip();
-    files.forEach(file => {
+    files.forEach((file: any) => {
       zip.file(file.path, file.content);
     });
 
