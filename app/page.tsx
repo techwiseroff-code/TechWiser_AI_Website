@@ -99,6 +99,10 @@ export default function Home() {
         model: selectedModel
       });
 
+      if (!result || !result.files) {
+        throw new Error("The AI model failed to return a proper code structure. Please try a different model or rephrase your prompt.");
+      }
+
       const newHistory = [
         ...history,
         { role: 'user', content: message },

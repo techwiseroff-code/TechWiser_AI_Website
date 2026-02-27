@@ -68,8 +68,22 @@ const callOpenRouter = async (prompt: string, history: any[], config: AIConfig):
   });
 
   if (!response.ok) {
-    const error = await response.json();
-    throw new Error(`OpenRouter Error: ${error.error?.message || response.statusText}`);
+    let errorMessage = response.statusText;
+    try {
+      const errorData = await response.json();
+      errorMessage = errorData.error?.message || JSON.stringify(errorData);
+    } catch {
+      // If the error isn't JSON, try to read it as text
+      const errorText = await response.text();
+      if (errorText) errorMessage = errorText;
+    }
+
+    // Check for provider limits/errors
+    if (response.status === 429 || errorMessage.toLowerCase().includes("limit") || errorMessage.toLowerCase().includes("quota")) {
+      throw new Error(`OpenRouter Quota Exceeded (${config.model}): Please check your API credits or try a different free model.`);
+    }
+
+    throw new Error(`OpenRouter Error: ${errorMessage}`);
   }
 
   const data = await response.json();

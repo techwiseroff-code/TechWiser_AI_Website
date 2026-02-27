@@ -20,9 +20,14 @@ async function ensureDb() {
 export async function GET() {
   await ensureDb();
   try {
-    const data = await fs.readFile(DB_PATH, 'utf-8');
-    let projects = JSON.parse(data);
-    
+    let projects = [];
+    try {
+      const data = await fs.readFile(DB_PATH, 'utf-8');
+      projects = data ? JSON.parse(data) : [];
+    } catch {
+      projects = [];
+    }
+
     // Filter out expired projects (older than 24 hours)
     const now = new Date();
     const validProjects = projects.filter((p: any) => {
@@ -46,19 +51,24 @@ export async function POST(req: Request) {
   await ensureDb();
   try {
     const project = await req.json();
-    const data = await fs.readFile(DB_PATH, 'utf-8');
-    const projects = JSON.parse(data);
-    
+    let projects = [];
+    try {
+      const data = await fs.readFile(DB_PATH, 'utf-8');
+      projects = data ? JSON.parse(data) : [];
+    } catch {
+      projects = [];
+    }
+
     const newProject = {
       ...project,
       id: Date.now().toString(),
       createdAt: new Date().toISOString(),
       expiresAt: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString(), // 24 hours from now
     };
-    
+
     projects.unshift(newProject);
     await fs.writeFile(DB_PATH, JSON.stringify(projects, null, 2));
-    
+
     return NextResponse.json(newProject);
   } catch (error) {
     return NextResponse.json({ error: 'Failed to create project' }, { status: 500 });
