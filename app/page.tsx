@@ -88,6 +88,32 @@ export default function Home() {
     setToasts(prev => prev.filter(t => t.id !== id));
   };
 
+  // Handle GitHub OAuth Redirects
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+
+    const url = new URL(window.location.href);
+    const token = url.searchParams.get('github_token');
+    const error = url.searchParams.get('github_error');
+
+    if (token) {
+      localStorage.setItem('techwiser_github_oauth_token', token);
+      addToast("Successfully connected to GitHub!", "success");
+
+      url.searchParams.delete('github_token');
+      window.history.replaceState({}, '', url.toString());
+
+      // We can't automatically open the modal here reliably since projects might still be loading,
+      // but the token is securely saved for the next manual click.
+    } else if (error) {
+      addToast(`GitHub connection failed: ${error}`, "error");
+
+      url.searchParams.delete('github_error');
+      window.history.replaceState({}, '', url.toString());
+    }
+  }, []);
+
+
   const handleSendMessage = async (message: string) => {
     setIsLoading(true);
     setShowWorkspace(true);

@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { Github, Key, FolderGit2, X, Loader2, CheckCircle, AlertCircle } from 'lucide-react';
 import { Octokit } from 'octokit';
@@ -27,17 +27,19 @@ export const GitHubModal: React.FC<GitHubModalProps> = ({ isOpen, onClose, files
 
   const [tokenError, setTokenError] = useState('');
 
+  useEffect(() => {
+    const savedToken = localStorage.getItem('techwiser_github_oauth_token');
+    if (savedToken) {
+      setToken(savedToken);
+    }
+  }, []);
+
   const validateToken = (value: string) => {
     if (!value) {
       setTokenError('Token is required');
       return false;
     }
-    if (!value.startsWith('ghp_') && !value.startsWith('github_pat_')) {
-      setTokenError('Token usually starts with "ghp_" or "github_pat_"');
-      // We don't block submission, just warn
-    } else {
-      setTokenError('');
-    }
+    setTokenError('');
     return true;
   };
 
@@ -231,38 +233,42 @@ export const GitHubModal: React.FC<GitHubModalProps> = ({ isOpen, onClose, files
                 </div>
               ) : (
                 <div className="space-y-4">
-                  <div className="space-y-2">
-                    <label className="text-xs font-bold uppercase tracking-wider text-white/40">Personal Access Token</label>
-                    <div className="relative">
-                      <Key size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-white/30" />
-                      <input
-                        type="password"
-                        value={token}
-                        onChange={(e) => {
-                          setToken(e.target.value);
-                          if (tokenError) setTokenError('');
-                        }}
-                        onBlur={(e) => validateToken(e.target.value)}
-                        placeholder="ghp_..."
-                        className={cn(
-                          "w-full bg-black/20 border rounded-xl py-2.5 pl-9 pr-4 text-sm text-white placeholder:text-white/20 focus:outline-none transition-colors",
-                          tokenError
-                            ? "border-red-500/50 focus:border-red-500"
-                            : "border-white/10 focus:border-emerald-500/50"
-                        )}
-                      />
+                  {token ? (
+                    <div className="space-y-2">
+                      <label className="text-xs font-bold uppercase tracking-wider text-white/40">GitHub Account</label>
+                      <div className="p-3 rounded-xl bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-between">
+                        <div className="flex items-center gap-2 text-emerald-400 text-sm font-medium">
+                          <CheckCircle size={16} />
+                          Connected
+                        </div>
+                        <button
+                          onClick={() => {
+                            setToken('');
+                            localStorage.removeItem('techwiser_github_oauth_token');
+                          }}
+                          className="text-white/40 hover:text-white text-xs transition-colors"
+                        >
+                          Disconnect
+                        </button>
+                      </div>
                     </div>
-                    {tokenError && (
-                      <p className="text-[10px] text-red-400 font-medium flex items-center gap-1">
-                        <AlertCircle size={10} /> {tokenError}
-                      </p>
-                    )}
-                    <p className="text-[10px] text-white/30 mt-2">
-                      Recommended: <a href="https://github.com/settings/tokens/new?description=TechWiser+AI+Builder&scopes=repo,workflow" target="_blank" rel="noreferrer" className="text-emerald-500 hover:underline">Generate Classic Token</a> (with <code className="bg-white/10 px-1 rounded">repo</code> scope).
-                      <br />
-                      <span className="opacity-75 tracking-tight">For Fine-grained tokens, grant "Administration" & "Contents" Write access to All Repositories.</span>
-                    </p>
-                  </div>
+                  ) : (
+                    <div className="space-y-4">
+                      <div className="p-4 rounded-xl bg-white/5 border border-white/10 flex flex-col items-center justify-center text-center space-y-3">
+                        <Github size={32} className="text-white/60" />
+                        <div className="space-y-1">
+                          <h3 className="text-sm font-bold text-white">Connect GitHub Account</h3>
+                          <p className="text-xs text-white/50">Authorize TechWiser to automatically push code and create pull requests on your behalf.</p>
+                        </div>
+                        <a
+                          href="/api/github/login"
+                          className="px-6 py-2 bg-white text-black font-bold rounded-xl hover:bg-white/90 transition-colors text-sm w-full outline-none"
+                        >
+                          Connect with GitHub
+                        </a>
+                      </div>
+                    </div>
+                  )}
 
                   <div className="space-y-2">
                     <label className="text-xs font-bold uppercase tracking-wider text-white/40">Repository Name</label>
