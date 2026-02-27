@@ -26,8 +26,8 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose })
   
   const [activeTab, setActiveTab] = useState<'general' | 'models' | 'account'>('general');
   const [availableModels, setAvailableModels] = useState<{id: string, name: string}[]>([
-    { id: 'gemini-2.0-flash-exp', name: 'Gemini 2.0 Flash (Default)' },
-    { id: 'gemini-1.5-pro', name: 'Gemini 1.5 Pro' },
+    { id: 'gemini-3-flash-preview', name: 'Gemini 3 Flash (Default)' },
+    { id: 'gemini-3.1-pro-preview', name: 'Gemini 3.1 Pro' },
     { id: 'gpt-4o', name: 'GPT-4o (via OpenRouter)' },
     { id: 'claude-3-5-sonnet', name: 'Claude 3.5 Sonnet (via OpenRouter)' },
     { id: 'deepseek-coder-v2', name: 'DeepSeek Coder V2 (via OpenRouter)' },

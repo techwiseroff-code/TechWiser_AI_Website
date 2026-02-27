@@ -93,7 +93,7 @@ export const generateCode = async (
   config: AIConfig = {}
 ): Promise<GenerationResult> => {
   
-  const model = config.model || 'gemini-2.0-flash-exp';
+  const model = config.model || 'gemini-3-flash-preview';
 
   // Check if we should use OpenRouter (non-Gemini models or explicit OpenRouter usage)
   const isOpenRouterModel = !model.startsWith('gemini');

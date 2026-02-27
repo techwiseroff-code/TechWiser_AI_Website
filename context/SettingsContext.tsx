@@ -18,7 +18,7 @@ const SettingsContext = createContext<SettingsContextType | undefined>(undefined
 export const SettingsProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [openRouterKey, setOpenRouterKey] = useState('');
   const [geminiKey, setGeminiKey] = useState('');
-  const [selectedModel, setSelectedModel] = useState('gemini-2.0-flash-exp'); // Default
+  const [selectedModel, setSelectedModel] = useState('gemini-3-flash-preview'); // Default
   const [useCustomGemini, setUseCustomGemini] = useState(false);
 
   useEffect(() => {
