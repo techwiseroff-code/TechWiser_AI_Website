@@ -1,19 +1,23 @@
 'use client';
 
 import React from 'react';
+import Image from 'next/image';
 import { useLanguage } from '@/context/LanguageContext';
-import { Sparkles, Github, Twitter, Layers, Zap, Menu } from 'lucide-react';
+import { useAuth } from '@/context/AuthContext';
+import { Sparkles, Github, Twitter, Layers, Zap, Menu, User } from 'lucide-react';
 
 interface HeaderProps {
   onMenuClick?: () => void;
+  onSignIn?: () => void;
 }
 
-export const Header: React.FC<HeaderProps> = ({ onMenuClick }) => {
+export const Header: React.FC<HeaderProps> = ({ onMenuClick, onSignIn }) => {
   const { t } = useLanguage();
+  const { user, logout } = useAuth();
 
   return (
-    <header className="fixed top-0 left-0 right-0 z-50 px-3 md:px-6 py-2 md:py-4">
-      <div className="max-w-7xl mx-auto flex items-center justify-between glass-panel rounded-xl md:rounded-2xl px-3 md:px-6 py-2 md:py-3 border border-white/10 shadow-xl bg-black/20 backdrop-blur-md">
+    <header className="fixed top-0 left-0 right-0 z-50 px-4 md:px-6 py-2 md:py-4">
+      <div className="max-w-7xl mx-auto flex items-center justify-between glass-panel rounded-xl md:rounded-2xl px-4 md:px-6 py-2 md:py-3 border border-white/10 shadow-xl bg-black/20 backdrop-blur-md">
         <div className="flex items-center gap-2 md:gap-3">
           <button 
             onClick={onMenuClick}
@@ -52,9 +56,31 @@ export const Header: React.FC<HeaderProps> = ({ onMenuClick }) => {
           <button className="hidden sm:flex p-2 hover:bg-white/5 rounded-lg transition-colors text-white/40 hover:text-white">
             <Github size={18} />
           </button>
-          <button className="bg-white text-black px-4 md:px-5 py-1.5 md:py-2 rounded-lg md:rounded-xl text-[10px] md:text-xs font-black uppercase tracking-widest hover:bg-emerald-400 transition-all duration-300 shadow-lg active:scale-95">
-            Sign In
-          </button>
+          
+          {user ? (
+            <div className="flex items-center gap-3 pl-3 border-l border-white/10">
+              <div className="text-right hidden sm:block">
+                <p className="text-[10px] font-bold text-white">{user.name}</p>
+                <p className="text-[8px] text-white/40 uppercase tracking-wider">Pro User</p>
+              </div>
+              <button className="w-8 h-8 rounded-full bg-emerald-500/20 border border-emerald-500/30 overflow-hidden hover:scale-105 transition-transform relative">
+                <Image 
+                  src={user.avatar || ''} 
+                  alt={user.name} 
+                  fill
+                  className="object-cover"
+                  referrerPolicy="no-referrer"
+                />
+              </button>
+            </div>
+          ) : (
+            <button 
+              onClick={onSignIn}
+              className="bg-white text-black px-4 md:px-5 py-1.5 md:py-2 rounded-lg md:rounded-xl text-[10px] md:text-xs font-black uppercase tracking-widest hover:bg-emerald-400 transition-all duration-300 shadow-lg active:scale-95"
+            >
+              Sign In
+            </button>
+          )}
         </div>
       </div>
     </header>

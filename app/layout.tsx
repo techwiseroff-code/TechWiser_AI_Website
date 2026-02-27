@@ -18,14 +18,20 @@ export const metadata: Metadata = {
 };
 
 import { LanguageProvider } from '@/context/LanguageContext';
+import { SettingsProvider } from '@/context/SettingsContext';
+import { AuthProvider } from '@/context/AuthContext';
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="en" className={`${inter.variable} ${spaceGrotesk.variable}`}>
       <body className="bg-[#050505] text-white antialiased selection:bg-emerald-500/30" suppressHydrationWarning>
-        <LanguageProvider>
-          {children}
-        </LanguageProvider>
+        <SettingsProvider>
+          <AuthProvider>
+            <LanguageProvider>
+              {children}
+            </LanguageProvider>
+          </AuthProvider>
+        </SettingsProvider>
       </body>
     </html>
   );

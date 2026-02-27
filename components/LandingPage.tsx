@@ -15,17 +15,20 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onStart }) => {
   return (
     <div className="min-h-full flex flex-col items-center justify-center px-4 py-16 md:py-24 overflow-y-auto selection:bg-emerald-500/30">
       {/* Hero Section */}
-      <div className="max-w-5xl w-full text-center space-y-10 md:space-y-16">
+      <div className="max-w-5xl w-full text-center space-y-10 md:space-y-16 relative z-10">
         <motion.div
           initial={{ opacity: 0, y: 30 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.8, ease: "easeOut" }}
           className="space-y-8"
         >
-          <div className="inline-flex items-center gap-2 px-5 py-2.5 rounded-full bg-emerald-500/10 border border-emerald-500/20 text-emerald-500 text-[10px] md:text-xs font-black uppercase tracking-[0.3em] shadow-[0_0_30px_rgba(16,185,129,0.1)]">
+          <motion.div 
+            whileHover={{ scale: 1.05 }}
+            className="inline-flex items-center gap-2 px-5 py-2.5 rounded-full bg-emerald-500/10 border border-emerald-500/20 text-emerald-500 text-[10px] md:text-xs font-black uppercase tracking-[0.3em] shadow-[0_0_30px_rgba(16,185,129,0.1)] cursor-default"
+          >
             <Sparkles size={14} className="animate-pulse" />
             The Future of App Building
-          </div>
+          </motion.div>
           
           <h1 className="text-5xl md:text-9xl font-display font-bold tracking-tighter leading-[0.85] md:leading-[0.8]">
             Build your <br />
@@ -40,25 +43,40 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onStart }) => {
           </p>
 
           <div className="flex flex-col sm:flex-row items-center justify-center gap-4 md:gap-6 pt-6">
-            <button 
+            <motion.button 
               onClick={onStart}
-              className="w-full sm:w-auto px-10 py-5 bg-emerald-500 text-black font-black uppercase tracking-widest text-xs rounded-2xl flex items-center justify-center gap-3 hover:bg-emerald-400 transition-all shadow-[0_0_40px_rgba(16,185,129,0.4)] hover:scale-105 active:scale-95 group"
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.95 }}
+              className="w-full sm:w-auto px-10 py-5 bg-emerald-500 text-black font-black uppercase tracking-widest text-xs rounded-2xl flex items-center justify-center gap-3 hover:bg-emerald-400 transition-colors shadow-[0_0_40px_rgba(16,185,129,0.4)] group"
             >
               Start Building Free
               <ArrowRight size={20} className="group-hover:translate-x-1.5 transition-transform duration-300" />
-            </button>
-            <button className="w-full sm:w-auto px-10 py-5 bg-white/5 border border-white/10 text-white font-black uppercase tracking-widest text-xs rounded-2xl flex items-center justify-center gap-3 hover:bg-white/10 transition-all backdrop-blur-md active:scale-95">
+            </motion.button>
+            <motion.button 
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.95 }}
+              className="w-full sm:w-auto px-10 py-5 bg-white/5 border border-white/10 text-white font-black uppercase tracking-widest text-xs rounded-2xl flex items-center justify-center gap-3 hover:bg-white/10 transition-colors backdrop-blur-md"
+            >
               <Play size={18} className="fill-current text-emerald-400" />
               Watch Demo
-            </button>
+            </motion.button>
           </div>
         </motion.div>
 
         {/* Features Grid */}
         <motion.div
-          initial={{ opacity: 0, y: 50 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 1, delay: 0.3, ease: "easeOut" }}
+          initial="hidden"
+          animate="visible"
+          variants={{
+            hidden: { opacity: 0 },
+            visible: {
+              opacity: 1,
+              transition: {
+                staggerChildren: 0.1,
+                delayChildren: 0.3
+              }
+            }
+          }}
           className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6 pt-16"
         >
           {[
@@ -67,7 +85,15 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onStart }) => {
             { icon: <Cpu className="text-purple-400" />, title: "AI Architect", desc: "Powered by Gemini 3.1 Pro reasoning." },
             { icon: <Layout className="text-emerald-400" />, title: "Responsive", desc: "Mobile-first designs by default." }
           ].map((feature, i) => (
-            <div key={i} className="glass-panel p-8 rounded-[2rem] border-white/5 hover:border-emerald-500/20 transition-all duration-500 group text-left space-y-4 hover:bg-white/[0.02]">
+            <motion.div 
+              key={i} 
+              variants={{
+                hidden: { opacity: 0, y: 20 },
+                visible: { opacity: 1, y: 0, transition: { type: "spring", stiffness: 50 } }
+              }}
+              whileHover={{ y: -5, borderColor: "rgba(16, 185, 129, 0.2)" }}
+              className="glass-panel p-8 rounded-[2rem] border-white/5 transition-colors duration-300 group text-left space-y-4 hover:bg-white/[0.02]"
+            >
               <div className="w-14 h-14 rounded-2xl bg-white/5 flex items-center justify-center group-hover:scale-110 group-hover:bg-emerald-500/10 transition-all duration-500">
                 {feature.icon}
               </div>
@@ -75,24 +101,8 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onStart }) => {
                 <h3 className="font-bold text-xl tracking-tight">{feature.title}</h3>
                 <p className="text-sm text-white/30 leading-relaxed font-medium">{feature.desc}</p>
               </div>
-            </div>
+            </motion.div>
           ))}
-        </motion.div>
-
-        {/* Social Proof */}
-        <motion.div
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ duration: 1, delay: 0.5 }}
-          className="pt-16 space-y-8"
-        >
-          <p className="text-[10px] uppercase tracking-[0.5em] text-white/20 font-black">Trusted by 10,000+ creators worldwide</p>
-          <div className="flex flex-wrap justify-center gap-10 md:gap-20 opacity-20 grayscale hover:opacity-40 transition-opacity duration-700">
-            <div className="text-2xl font-black italic tracking-tighter">STRIPE</div>
-            <div className="text-2xl font-black italic tracking-tighter">VERCEL</div>
-            <div className="text-2xl font-black italic tracking-tighter">LINEAR</div>
-            <div className="text-2xl font-black italic tracking-tighter">SUPABASE</div>
-          </div>
         </motion.div>
       </div>
     </div>
