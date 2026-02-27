@@ -30,6 +30,8 @@ const SYSTEM_INSTRUCTION = `
   6. Use 'lucide-react' for all icons.
   7. Use 'motion/react' for all animations.
   8. EFFICIENCY: Only generate necessary files. Do not include package.json, tsconfig.json, or other config files unless explicitly asked. Focus on the source code.
+  9. NO IMAGES: In generation avoid images. Do not use or generate any placeholder images or external image links. Use Lucide icons instead.
+  10. FUNCTIONALITY: Make sure the website is fully functional and all buttons are clickable with appropriate event handlers.
   
   The JSON structure must be:
   {
