@@ -1,19 +1,35 @@
 'use client';
 
 import React from 'react';
-import { 
-  SandpackProvider, 
-  SandpackLayout, 
-  SandpackCodeEditor, 
+import {
+  SandpackProvider,
+  SandpackLayout,
+  SandpackCodeEditor,
   SandpackPreview,
-  SandpackFileExplorer
+  SandpackFileExplorer,
+  useSandpack
 } from "@codesandbox/sandpack-react";
 import { autocompletion, completionKeymap } from "@codemirror/autocomplete";
 import { GeneratedFile } from '@/lib/gemini';
 import { cn } from '@/lib/utils';
 import { Loader2, ExternalLink, AlertTriangle } from 'lucide-react';
 
-// ...
+const FixIssuesButton = ({ onFixError }: { onFixError: (error: string) => void }) => {
+  const { sandpack } = useSandpack();
+
+  if (!sandpack.error) return null;
+
+  return (
+    <button
+      onClick={() => onFixError(sandpack.error?.message || "Please check the code for errors and fix them.")}
+      className="p-2 bg-red-500/90 text-white rounded-full hover:bg-red-600 transition-colors shadow-lg flex items-center gap-2 px-4"
+      title="Fix Errors with AI"
+    >
+      <AlertTriangle size={16} />
+      <span className="text-xs font-bold">Fix Issues</span>
+    </button>
+  );
+};
 
 interface PreviewPanelProps {
   files: GeneratedFile[];
@@ -25,7 +41,7 @@ interface PreviewPanelProps {
 export const PreviewPanel: React.FC<PreviewPanelProps> = ({ files, viewMode, loadingState = 'idle', onFixError }) => {
   // Convert our files to Sandpack format
   const sandpackFiles: Record<string, string> = {};
-  
+
   if (files.length === 0) {
     sandpackFiles["App.tsx"] = `
 import React from 'react';
@@ -101,7 +117,7 @@ export default function App() {
           </div>
         </div>
       )}
-      
+
       <SandpackProvider
         template="react-ts"
         theme="dark"
@@ -139,11 +155,11 @@ export default function App() {
               viewMode === 'preview' ? "flex-0 w-0 opacity-0 overflow-hidden border-none" : "flex-1",
               viewMode === 'split' && "hidden lg:block"
             )}>
-              <SandpackCodeEditor 
-                showTabs 
-                showLineNumbers 
-                closableTabs 
-                className="!h-full" 
+              <SandpackCodeEditor
+                showTabs
+                showLineNumbers
+                closableTabs
+                className="!h-full"
               />
               {loadingState === 'updating' && (
                 <div className="absolute inset-0 z-10 bg-black/50 backdrop-blur-[2px] flex items-center justify-center">
@@ -160,12 +176,12 @@ export default function App() {
               "h-full bg-white relative transition-all duration-300 min-w-0",
               viewMode === 'code' ? "flex-0 w-0 opacity-0 overflow-hidden" : "flex-1"
             )}>
-              <SandpackPreview 
-                className="!h-full" 
-                showNavigator 
-                showOpenInCodeSandbox={false} 
+              <SandpackPreview
+                className="!h-full"
+                showNavigator
+                showOpenInCodeSandbox={false}
               />
-              
+
               {loadingState === 'updating' && (
                 <div className="absolute inset-0 z-40 bg-white/50 backdrop-blur-[2px] flex items-center justify-center">
                   <div className="bg-black/80 border border-white/10 px-4 py-2 rounded-full flex items-center gap-3 shadow-xl">
@@ -176,17 +192,8 @@ export default function App() {
               )}
 
               <div className="absolute bottom-4 right-4 flex gap-2 z-50">
-                {onFixError && (
-                   <button
-                    onClick={() => onFixError("Please check the code for errors and fix them.")}
-                    className="p-2 bg-red-500/90 text-white rounded-full hover:bg-red-600 transition-colors shadow-lg flex items-center gap-2 px-4"
-                    title="Fix Errors with AI"
-                  >
-                    <AlertTriangle size={16} />
-                    <span className="text-xs font-bold">Fix Issues</span>
-                  </button>
-                )}
-                <a 
+                {onFixError && <FixIssuesButton onFixError={onFixError} />}
+                <a
                   href="#"
                   onClick={(e) => {
                     e.preventDefault();

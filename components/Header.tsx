@@ -19,7 +19,7 @@ export const Header: React.FC<HeaderProps> = ({ onMenuClick, onSignIn }) => {
     <header className="fixed top-0 left-0 right-0 z-50 px-4 md:px-6 py-2 md:py-4">
       <div className="max-w-7xl mx-auto flex items-center justify-between glass-panel rounded-xl md:rounded-2xl px-4 md:px-6 py-2 md:py-3 border border-white/10 shadow-xl bg-black/20 backdrop-blur-md">
         <div className="flex items-center gap-2 md:gap-3">
-          <button 
+          <button
             onClick={onMenuClick}
             className="p-2 hover:bg-white/5 rounded-lg transition-colors text-white/60 md:hidden active:scale-90"
           >
@@ -39,15 +39,6 @@ export const Header: React.FC<HeaderProps> = ({ onMenuClick, onSignIn }) => {
           </div>
         </div>
 
-        <nav className="hidden lg:flex items-center gap-8">
-          <a href="#" className="text-xs font-bold uppercase tracking-widest text-white/40 hover:text-emerald-400 transition-colors flex items-center gap-2 group">
-            <Layers size={14} className="group-hover:rotate-12 transition-transform" />
-            {t('workspace')}
-          </a>
-          <a href="#" className="text-xs font-bold uppercase tracking-widest text-white/40 hover:text-emerald-400 transition-colors">Templates</a>
-          <a href="#" className="text-xs font-bold uppercase tracking-widest text-white/40 hover:text-emerald-400 transition-colors">Components</a>
-        </nav>
-
         <div className="flex items-center gap-2 md:gap-4">
           <div className="hidden md:flex items-center gap-2 px-3 py-1.5 rounded-full bg-emerald-500/5 border border-emerald-500/10">
             <div className="w-1.5 h-1.5 rounded-full bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.8)] animate-pulse"></div>
@@ -56,7 +47,7 @@ export const Header: React.FC<HeaderProps> = ({ onMenuClick, onSignIn }) => {
           <button className="hidden sm:flex p-2 hover:bg-white/5 rounded-lg transition-colors text-white/40 hover:text-white">
             <Github size={18} />
           </button>
-          
+
           {user ? (
             <div className="flex items-center gap-3 pl-3 border-l border-white/10">
               <div className="text-right hidden sm:block">
@@ -64,9 +55,9 @@ export const Header: React.FC<HeaderProps> = ({ onMenuClick, onSignIn }) => {
                 <p className="text-[8px] text-white/40 uppercase tracking-wider">Pro User</p>
               </div>
               <button className="w-8 h-8 rounded-full bg-emerald-500/20 border border-emerald-500/30 overflow-hidden hover:scale-105 transition-transform relative">
-                <Image 
-                  src={user.avatar || ''} 
-                  alt={user.name} 
+                <Image
+                  src={user.avatar || ''}
+                  alt={user.name}
                   fill
                   className="object-cover"
                   referrerPolicy="no-referrer"
@@ -74,7 +65,7 @@ export const Header: React.FC<HeaderProps> = ({ onMenuClick, onSignIn }) => {
               </button>
             </div>
           ) : (
-            <button 
+            <button
               onClick={onSignIn}
               className="bg-white text-black px-4 md:px-5 py-1.5 md:py-2 rounded-lg md:rounded-xl text-[10px] md:text-xs font-black uppercase tracking-widest hover:bg-emerald-400 transition-all duration-300 shadow-lg active:scale-95"
             >

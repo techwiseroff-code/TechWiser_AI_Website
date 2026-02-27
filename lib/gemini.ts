@@ -1,4 +1,5 @@
 import { GoogleGenAI, Type } from "@google/genai";
+import { GEMINI_MODELS } from "./openrouter";
 
 export interface GeneratedFile {
   path: string;
@@ -41,7 +42,8 @@ const SYSTEM_INSTRUCTION = `
 `;
 
 const callOpenRouter = async (prompt: string, history: any[], config: AIConfig): Promise<GenerationResult> => {
-  if (!config.openRouterKey) {
+  const apiKey = config.openRouterKey || process.env.NEXT_PUBLIC_OPENROUTER_API_KEY;
+  if (!apiKey) {
     throw new Error("OpenRouter API Key is required for this model.");
   }
 
@@ -54,15 +56,14 @@ const callOpenRouter = async (prompt: string, history: any[], config: AIConfig):
   const response = await fetch("https://openrouter.ai/api/v1/chat/completions", {
     method: "POST",
     headers: {
-      "Authorization": `Bearer ${config.openRouterKey}`,
+      "Authorization": `Bearer ${apiKey}`,
       "Content-Type": "application/json",
       "HTTP-Referer": typeof window !== 'undefined' ? window.location.origin : "https://techwiser.ai",
       "X-Title": "TechWiser"
     },
     body: JSON.stringify({
       model: config.model,
-      messages: messages,
-      response_format: { type: "json_object" }
+      messages: messages
     })
   });
 
@@ -73,32 +74,35 @@ const callOpenRouter = async (prompt: string, history: any[], config: AIConfig):
 
   const data = await response.json();
   const content = data.choices[0].message.content;
-  
+
   try {
     return JSON.parse(content);
   } catch (e) {
     console.error("Failed to parse OpenRouter response", e);
     // Try to extract JSON if wrapped in markdown
-    const jsonMatch = content.match(/```json\n([\s\S]*?)\n```/) || content.match(/\{[\s\S]*\}/);
+    const jsonMatch = content.match(/```(?:json)?\s*?([\s\S]*?)```/) || content.match(/\{[\s\S]*\}/);
     if (jsonMatch) {
-      return JSON.parse(jsonMatch[1] || jsonMatch[0]);
+      try {
+        return JSON.parse(jsonMatch[1] || jsonMatch[0]);
+      } catch (parseAttemptError) {
+        throw new Error("Could not parse the generated code structure. Please try again.");
+      }
     }
-    throw new Error("Invalid JSON response from OpenRouter");
+    throw new Error("Invalid format returned from AI model. Please try again.");
   }
 };
 
 export const generateCode = async (
-  prompt: string, 
+  prompt: string,
   history: { role: string; content: string }[] = [],
   config: AIConfig = {}
 ): Promise<GenerationResult> => {
-  
-  const model = config.model || 'gemini-3-flash-preview';
+  const model = config.model || 'gemini-2.5-flash';
 
-  // Check if we should use OpenRouter (non-Gemini models or explicit OpenRouter usage)
-  const isOpenRouterModel = !model.startsWith('gemini');
-  
-  if (isOpenRouterModel) {
+  // Check if model is a built-in Gemini model (uses Google GenAI SDK directly)
+  const isGeminiModel = GEMINI_MODELS.some(m => m.id === model);
+
+  if (!isGeminiModel) {
     return callOpenRouter(prompt, history, config);
   }
 
@@ -109,7 +113,7 @@ export const generateCode = async (
   }
 
   const ai = new GoogleGenAI({ apiKey });
-  
+
   // Format history for the model
   const formattedHistory = history.map(msg => ({
     role: msg.role === 'user' ? 'user' : 'model',
@@ -122,38 +126,48 @@ export const generateCode = async (
     { role: "user", parts: [{ text: `System: ${SYSTEM_INSTRUCTION}\n\nUser Request: ${prompt}` }] }
   ];
 
-  const response = await ai.models.generateContent({
-    model: model, // Use the selected Gemini model
-    contents: contents,
-    config: {
-      responseMimeType: "application/json",
-      responseSchema: {
-        type: Type.OBJECT,
-        properties: {
-          files: {
-            type: Type.ARRAY,
-            items: {
-              type: Type.OBJECT,
-              properties: {
-                path: { type: Type.STRING },
-                content: { type: Type.STRING }
-              },
-              required: ["path", "content"]
-            }
-          },
-          description: { type: Type.STRING }
-        },
-        required: ["files", "description"]
-      }
-    }
-  });
-
   try {
-    const text = response.text;
-    if (!text) throw new Error("No response from AI");
-    return JSON.parse(text) as GenerationResult;
-  } catch (error) {
-    console.error("Failed to parse AI response:", error);
-    throw new Error("The AI returned an invalid response format. Please try again.");
+    const response = await ai.models.generateContent({
+      model: model, // Use the selected Gemini model
+      contents: contents,
+      config: {
+        responseMimeType: "application/json",
+        responseSchema: {
+          type: Type.OBJECT,
+          properties: {
+            files: {
+              type: Type.ARRAY,
+              items: {
+                type: Type.OBJECT,
+                properties: {
+                  path: { type: Type.STRING },
+                  content: { type: Type.STRING }
+                },
+                required: ["path", "content"]
+              }
+            },
+            description: { type: Type.STRING }
+          },
+          required: ["files", "description"]
+        }
+      }
+    });
+
+    try {
+      const text = response.text;
+      if (!text) throw new Error("No response from AI");
+      return JSON.parse(text) as GenerationResult;
+    } catch (error) {
+      console.error("Failed to parse AI response:", error);
+      throw new Error("The AI returned an invalid response format. Please try again.");
+    }
+  } catch (error: any) {
+    console.error("Gemini API Error:", error);
+    // Handle specific API errors like 429 Quota Exceeded
+    if (error?.status === 429 || error?.message?.includes("exceeded your current quota") || error?.message?.includes("429")) {
+      throw new Error("API Quota Exceeded: You have reached the rate limit for this model. Please try again later or use your own API key.");
+    }
+    // Generic re-throw with user-friendly message if possible
+    throw new Error(error?.message || "Failed to communicate with the Gemini API. Please check your API key and internet connection.");
   }
 };

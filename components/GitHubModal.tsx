@@ -43,17 +43,17 @@ export const GitHubModal: React.FC<GitHubModalProps> = ({ isOpen, onClose, files
 
   const handlePush = async () => {
     if (!validateToken(token) || !repoName) return;
-    
+
     setIsLoading(true);
     setStatus('idle');
     setMessage('');
 
     try {
       const octokit = new Octokit({ auth: token });
-      
+
       // 1. Get User Info
       const { data: user } = await octokit.rest.users.getAuthenticated();
-      
+
       // 2. Create Repo (or get existing)
       let repo;
       try {
@@ -154,9 +154,15 @@ export const GitHubModal: React.FC<GitHubModalProps> = ({ isOpen, onClose, files
         setRepoUrl(repo.html_url);
       }
     } catch (error: any) {
-      console.error(error);
+      console.error('GitHub Push Error:', error);
       setStatus('error');
-      setMessage(error.message || 'Failed to push to GitHub');
+
+      let errorMessage = error.message || 'Failed to push to GitHub';
+      if (errorMessage.includes('Resource not accessible by personal access token') || error.status === 403) {
+        errorMessage = 'Token lacks required permissions. Please generate a Classic Token with "repo" scope, or ensure your Fine-grained token has "Administration" & "Contents" Write access to All Repositories.';
+      }
+
+      setMessage(errorMessage);
     } finally {
       setIsLoading(false);
     }
@@ -166,14 +172,14 @@ export const GitHubModal: React.FC<GitHubModalProps> = ({ isOpen, onClose, files
     <AnimatePresence>
       {isOpen && (
         <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
-          <motion.div 
-            initial={{ opacity: 0 }} 
-            animate={{ opacity: 1 }} 
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             onClick={onClose}
             className="absolute inset-0 bg-black/60 backdrop-blur-sm"
           />
-          
+
           <motion.div
             initial={{ opacity: 0, scale: 0.95, y: 20 }}
             animate={{ opacity: 1, scale: 1, y: 0 }}
@@ -203,18 +209,18 @@ export const GitHubModal: React.FC<GitHubModalProps> = ({ isOpen, onClose, files
                     <p className="text-sm text-white/60">{createPR ? 'Pull Request created successfully.' : 'Your code has been pushed to the repository.'}</p>
                   </div>
                   <div className="flex gap-2">
-                    <a 
-                      href={repoUrl} 
-                      target="_blank" 
+                    <a
+                      href={repoUrl}
+                      target="_blank"
                       rel="noopener noreferrer"
                       className="px-6 py-2 bg-white text-black font-bold rounded-xl hover:bg-white/90 transition-colors flex items-center gap-2 text-sm"
                     >
                       View Repository <FolderGit2 size={14} />
                     </a>
                     {prUrl && (
-                      <a 
-                        href={prUrl} 
-                        target="_blank" 
+                      <a
+                        href={prUrl}
+                        target="_blank"
                         rel="noopener noreferrer"
                         className="px-6 py-2 bg-emerald-500 text-black font-bold rounded-xl hover:bg-emerald-400 transition-colors flex items-center gap-2 text-sm"
                       >
@@ -225,44 +231,45 @@ export const GitHubModal: React.FC<GitHubModalProps> = ({ isOpen, onClose, files
                 </div>
               ) : (
                 <div className="space-y-4">
-                    <div className="space-y-2">
-                      <label className="text-xs font-bold uppercase tracking-wider text-white/40">Personal Access Token</label>
-                      <div className="relative">
-                        <Key size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-white/30" />
-                        <input 
-                          type="password" 
-                          value={token}
-                          onChange={(e) => {
-                            setToken(e.target.value);
-                            if (tokenError) setTokenError('');
-                          }}
-                          onBlur={(e) => validateToken(e.target.value)}
-                          placeholder="ghp_..."
-                          className={cn(
-                            "w-full bg-black/20 border rounded-xl py-2.5 pl-9 pr-4 text-sm text-white placeholder:text-white/20 focus:outline-none transition-colors",
-                            tokenError 
-                              ? "border-red-500/50 focus:border-red-500" 
-                              : "border-white/10 focus:border-emerald-500/50"
-                          )}
-                        />
-                      </div>
-                      {tokenError && (
-                        <p className="text-[10px] text-red-400 font-medium flex items-center gap-1">
-                          <AlertCircle size={10} /> {tokenError}
-                        </p>
-                      )}
-                      <p className="text-[10px] text-white/30">
-                        Requires <code className="bg-white/10 px-1 rounded">repo</code> scope. 
-                        <a href="https://github.com/settings/tokens" target="_blank" rel="noreferrer" className="text-emerald-500 hover:underline ml-1">Generate Token</a>
-                      </p>
+                  <div className="space-y-2">
+                    <label className="text-xs font-bold uppercase tracking-wider text-white/40">Personal Access Token</label>
+                    <div className="relative">
+                      <Key size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-white/30" />
+                      <input
+                        type="password"
+                        value={token}
+                        onChange={(e) => {
+                          setToken(e.target.value);
+                          if (tokenError) setTokenError('');
+                        }}
+                        onBlur={(e) => validateToken(e.target.value)}
+                        placeholder="ghp_..."
+                        className={cn(
+                          "w-full bg-black/20 border rounded-xl py-2.5 pl-9 pr-4 text-sm text-white placeholder:text-white/20 focus:outline-none transition-colors",
+                          tokenError
+                            ? "border-red-500/50 focus:border-red-500"
+                            : "border-white/10 focus:border-emerald-500/50"
+                        )}
+                      />
                     </div>
+                    {tokenError && (
+                      <p className="text-[10px] text-red-400 font-medium flex items-center gap-1">
+                        <AlertCircle size={10} /> {tokenError}
+                      </p>
+                    )}
+                    <p className="text-[10px] text-white/30 mt-2">
+                      Recommended: <a href="https://github.com/settings/tokens/new?description=TechWiser+AI+Builder&scopes=repo,workflow" target="_blank" rel="noreferrer" className="text-emerald-500 hover:underline">Generate Classic Token</a> (with <code className="bg-white/10 px-1 rounded">repo</code> scope).
+                      <br />
+                      <span className="opacity-75 tracking-tight">For Fine-grained tokens, grant "Administration" & "Contents" Write access to All Repositories.</span>
+                    </p>
+                  </div>
 
                   <div className="space-y-2">
                     <label className="text-xs font-bold uppercase tracking-wider text-white/40">Repository Name</label>
                     <div className="relative">
                       <FolderGit2 size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-white/30" />
-                      <input 
-                        type="text" 
+                      <input
+                        type="text"
                         value={repoName}
                         onChange={(e) => setRepoName(e.target.value)}
                         placeholder="my-awesome-project"
@@ -272,8 +279,8 @@ export const GitHubModal: React.FC<GitHubModalProps> = ({ isOpen, onClose, files
                   </div>
 
                   <div className="flex items-center gap-2">
-                    <input 
-                      type="checkbox" 
+                    <input
+                      type="checkbox"
                       id="private-repo"
                       checked={isPrivate}
                       onChange={(e) => setIsPrivate(e.target.checked)}
@@ -283,8 +290,8 @@ export const GitHubModal: React.FC<GitHubModalProps> = ({ isOpen, onClose, files
                   </div>
 
                   <div className="flex items-center gap-2">
-                    <input 
-                      type="checkbox" 
+                    <input
+                      type="checkbox"
                       id="create-pr"
                       checked={createPR}
                       onChange={(e) => setCreatePR(e.target.checked)}
@@ -300,7 +307,7 @@ export const GitHubModal: React.FC<GitHubModalProps> = ({ isOpen, onClose, files
                     </div>
                   )}
 
-                  <button 
+                  <button
                     onClick={handlePush}
                     disabled={isLoading || !token || !repoName}
                     className="w-full py-3 bg-[#238636] hover:bg-[#2ea043] disabled:opacity-50 disabled:cursor-not-allowed text-white font-bold rounded-xl transition-all flex items-center justify-center gap-2 shadow-lg shadow-emerald-900/20"
