@@ -22,14 +22,14 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onStart }) => {
           transition={{ duration: 0.8, ease: "easeOut" }}
           className="space-y-8"
         >
-          <motion.div 
+          <motion.div
             whileHover={{ scale: 1.05 }}
             className="inline-flex items-center gap-2 px-5 py-2.5 rounded-full bg-emerald-500/10 border border-emerald-500/20 text-emerald-500 text-[10px] md:text-xs font-black uppercase tracking-[0.3em] shadow-[0_0_30px_rgba(16,185,129,0.1)] cursor-default"
           >
             <Sparkles size={14} className="animate-pulse" />
             The Future of App Building
           </motion.div>
-          
+
           <h1 className="text-5xl md:text-9xl font-display font-bold tracking-tighter leading-[0.85] md:leading-[0.8]">
             Build your <br />
             <span className="bg-gradient-to-r from-emerald-400 via-cyan-400 to-blue-500 bg-clip-text text-transparent drop-shadow-[0_0_30px_rgba(52,211,153,0.3)]">
@@ -37,13 +37,13 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onStart }) => {
             </span> <br />
             with AI.
           </h1>
-          
+
           <p className="text-white/40 text-base md:text-2xl max-w-2xl mx-auto font-medium leading-relaxed tracking-tight">
             TechWiser turns your ideas into production-ready React applications in seconds. No code required. Multi-language support included.
           </p>
 
           <div className="flex flex-col sm:flex-row items-center justify-center gap-4 md:gap-6 pt-6">
-            <motion.button 
+            <motion.button
               onClick={onStart}
               whileHover={{ scale: 1.05 }}
               whileTap={{ scale: 0.95 }}
@@ -51,14 +51,6 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onStart }) => {
             >
               Start Building Free
               <ArrowRight size={20} className="group-hover:translate-x-1.5 transition-transform duration-300" />
-            </motion.button>
-            <motion.button 
-              whileHover={{ scale: 1.05 }}
-              whileTap={{ scale: 0.95 }}
-              className="w-full sm:w-auto px-10 py-5 bg-white/5 border border-white/10 text-white font-black uppercase tracking-widest text-xs rounded-2xl flex items-center justify-center gap-3 hover:bg-white/10 transition-colors backdrop-blur-md"
-            >
-              <Play size={18} className="fill-current text-emerald-400" />
-              Watch Demo
             </motion.button>
           </div>
         </motion.div>
@@ -85,8 +77,8 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onStart }) => {
             { icon: <Cpu className="text-purple-400" />, title: "AI Architect", desc: "Powered by Gemini 3.1 Pro reasoning." },
             { icon: <Layout className="text-emerald-400" />, title: "Responsive", desc: "Mobile-first designs by default." }
           ].map((feature, i) => (
-            <motion.div 
-              key={i} 
+            <motion.div
+              key={i}
               variants={{
                 hidden: { opacity: 0, y: 20 },
                 visible: { opacity: 1, y: 0, transition: { type: "spring", stiffness: 50 } }
