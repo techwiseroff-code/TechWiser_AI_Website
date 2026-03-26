@@ -255,7 +255,7 @@ function ChatView() {
                                 What would you like to build?
                             </h2>
                             <p className="text-sm text-zinc-600 max-w-[240px] leading-relaxed">
-                                Describe the app you're imagining and AI will generate it for you.
+                                Describe the app you&apos;re imagining and AI will generate it for you.
                             </p>
                         </div>
                     )}

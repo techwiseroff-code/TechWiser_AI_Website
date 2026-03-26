@@ -37,6 +37,12 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const syncUser = useMutation(api.users.syncUser);
 
   useEffect(() => {
+    if (!auth) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
+      setIsLoading(false);
+      return;
+    }
+
     const unsubscribe = onAuthStateChanged(auth, async (firebaseUser: FirebaseUser | null) => {
       if (firebaseUser) {
         const userData = {
@@ -69,10 +75,16 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   }, [syncUser]);
 
   const logout = async () => {
-    await firebaseSignOut(auth);
+    if (auth) {
+      await firebaseSignOut(auth);
+    }
   };
 
   const loginWithGoogle = async () => {
+    if (!auth) {
+      console.error('Firebase Auth is not initialized due to missing API keys');
+      return;
+    }
     const provider = new GoogleAuthProvider();
     await signInWithPopup(auth, provider);
   };

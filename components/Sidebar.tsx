@@ -416,7 +416,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
                         <ol className="list-decimal list-inside space-y-0.5">
                           <li>Go to <a href="https://aistudio.google.com/app/apikey" target="_blank" rel="noreferrer" className="text-emerald-400 hover:underline">aistudio.google.com</a></li>
                           <li>Sign in with your Google account</li>
-                          <li>Click <strong>"Create API Key"</strong></li>
+                          <li>Click <strong>&quot;Create API Key&quot;</strong></li>
                           <li>Copy the key and paste it above</li>
                         </ol>
                       </div>
@@ -462,7 +462,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
                     <ol className="list-decimal list-inside space-y-0.5">
                       <li>Go to <a href="https://openrouter.ai/keys" target="_blank" rel="noreferrer" className="text-emerald-400 hover:underline">openrouter.ai/keys</a></li>
                       <li>Sign up or log in</li>
-                      <li>Click <strong>"Create Key"</strong></li>
+                      <li>Click <strong>&quot;Create Key&quot;</strong></li>
                       <li>Copy the key and paste it above</li>
                     </ol>
                   </div>
