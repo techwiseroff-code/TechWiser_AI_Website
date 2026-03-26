@@ -72,13 +72,7 @@ export default function Home() {
   const currentProject = projects.find(p => p.id === currentProjectId);
   const files = currentProject?.files || [];
 
-  // Fetch projects from backend on mount
-  useEffect(() => {
-    if (convexWorkspaces && convexWorkspaces.length > 0 && !currentProjectId && !showWorkspace) {
-      setCurrentProjectId(convexWorkspaces[0]._id);
-      setShowWorkspace(true);
-    }
-  }, [convexWorkspaces]);
+  // Removed auto-loading of latest project to ensure landing page stays visible until clicked
 
   const addToast = (message: string, type: 'success' | 'error' | 'info' = 'success') => {
     const id = Math.random().toString(36).substring(2, 9);
