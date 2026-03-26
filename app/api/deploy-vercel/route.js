@@ -1,17 +1,18 @@
 import { NextResponse } from "next/server";
 
 // Deploy generated project to Vercel (Lovable/Emergent style)
-// Requires VERCEL_TOKEN and optionally VERCEL_TEAM_ID in .env.local
+// Requires token from req.body (for end-users) or VERCEL_TOKEN in .env.local
 export async function POST(req) {
   try {
-    const { files } = await req.json();
-    const token = process.env.VERCEL_TOKEN;
+    const body = await req.json();
+    const { files, token: clientToken } = body;
+    const token = clientToken || process.env.VERCEL_TOKEN;
 
     if (!token) {
       return NextResponse.json(
         {
           error:
-            "Vercel deploy is not configured. Add VERCEL_TOKEN to .env.local (create one at vercel.com/account/tokens).",
+            "Vercel token is missing. Please provide a Vercel Token.",
         },
         { status: 400 }
       );

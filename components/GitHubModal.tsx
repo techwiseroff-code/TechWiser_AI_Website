@@ -16,6 +16,7 @@ interface GitHubModalProps {
 
 export const GitHubModal: React.FC<GitHubModalProps> = ({ isOpen, onClose, files, projectName }) => {
   const [token, setToken] = useState('');
+  const [inputToken, setInputToken] = useState('');
   const [repoName, setRepoName] = useState(projectName.toLowerCase().replace(/\s+/g, '-'));
   const [isPrivate, setIsPrivate] = useState(false);
   const [createPR, setCreatePR] = useState(false);
@@ -44,14 +45,19 @@ export const GitHubModal: React.FC<GitHubModalProps> = ({ isOpen, onClose, files
   };
 
   const handlePush = async () => {
-    if (!validateToken(token) || !repoName) return;
+    if (!token && !inputToken) {
+      setTokenError('Token is required');
+      return;
+    }
+    const finalToken = token || inputToken;
+    if (!repoName) return;
 
     setIsLoading(true);
     setStatus('idle');
     setMessage('');
 
     try {
-      const octokit = new Octokit({ auth: token });
+      const octokit = new Octokit({ auth: finalToken });
 
       // 1. Get User Info
       const { data: user } = await octokit.rest.users.getAuthenticated();
@@ -155,6 +161,12 @@ export const GitHubModal: React.FC<GitHubModalProps> = ({ isOpen, onClose, files
         setMessage('Successfully pushed to GitHub!');
         setRepoUrl(repo.html_url);
       }
+      
+      // Save token if successful and it was new
+      if (inputToken && !token) {
+        setToken(inputToken);
+        localStorage.setItem('techwiser_github_oauth_token', inputToken);
+      }
     } catch (error: any) {
       console.error('GitHub Push Error:', error);
       setStatus('error');
@@ -244,6 +256,7 @@ export const GitHubModal: React.FC<GitHubModalProps> = ({ isOpen, onClose, files
                         <button
                           onClick={() => {
                             setToken('');
+                            setInputToken('');
                             localStorage.removeItem('techwiser_github_oauth_token');
                           }}
                           className="text-white/40 hover:text-white text-xs transition-colors"
@@ -258,14 +271,18 @@ export const GitHubModal: React.FC<GitHubModalProps> = ({ isOpen, onClose, files
                         <Github size={32} className="text-white/60" />
                         <div className="space-y-1">
                           <h3 className="text-sm font-bold text-white">Connect GitHub Account</h3>
-                          <p className="text-xs text-white/50">Authorize TechWiser to automatically push code and create pull requests on your behalf.</p>
+                          <p className="text-xs text-white/50">Provide a GitHub Personal Access Token (Classic or Fine-grained) to push code.</p>
                         </div>
-                        <a
-                          href="/api/github/login"
-                          className="px-6 py-2 bg-white text-black font-bold rounded-xl hover:bg-white/90 transition-colors text-sm w-full outline-none"
-                        >
-                          Connect with GitHub
-                        </a>
+                        <div className="w-full text-left mt-2">
+                           <a href="https://github.com/settings/tokens?type=beta" target="_blank" className="text-xs text-emerald-400 hover:text-emerald-300 underline">Get your GitHub Token here</a>
+                        </div>
+                        <input
+                          type="password"
+                          value={inputToken}
+                          onChange={(e) => setInputToken(e.target.value)}
+                          placeholder="Paste GitHub Token (e.g. github_pat_...)"
+                          className="w-full bg-black/20 border border-white/10 rounded-xl py-2.5 px-4 text-sm text-white placeholder:text-white/20 focus:outline-none focus:border-emerald-500/50 transition-colors"
+                        />
                       </div>
                     </div>
                   )}
@@ -315,7 +332,7 @@ export const GitHubModal: React.FC<GitHubModalProps> = ({ isOpen, onClose, files
 
                   <button
                     onClick={handlePush}
-                    disabled={isLoading || !token || !repoName}
+                    disabled={isLoading || (!token && !inputToken) || !repoName}
                     className="w-full py-3 bg-[#238636] hover:bg-[#2ea043] disabled:opacity-50 disabled:cursor-not-allowed text-white font-bold rounded-xl transition-all flex items-center justify-center gap-2 shadow-lg shadow-emerald-900/20"
                   >
                     {isLoading ? <Loader2 size={16} className="animate-spin" /> : <Github size={16} />}

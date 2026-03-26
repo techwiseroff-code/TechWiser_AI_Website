@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { GitHubModal } from '@/components/GitHubModal';
+import { PublishModal } from '@/components/PublishModal';
 import { Header } from '@/components/Header';
 import { Sidebar } from '@/components/Sidebar';
 import { ChatInterface } from '@/components/ChatInterface';
@@ -46,6 +47,7 @@ export default function Home() {
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
   const [showWorkspace, setShowWorkspace] = useState(false);
   const [isGitHubModalOpen, setIsGitHubModalOpen] = useState(false);
+  const [isPublishModalOpen, setIsPublishModalOpen] = useState(false);
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
 
@@ -208,13 +210,9 @@ export default function Home() {
     handleSendMessage(currentProject.lastPrompt);
   };
 
-  const handlePublish = () => {
+  const handlePublish = async () => {
     if (files.length === 0) return;
-    setIsLoading(true);
-    setTimeout(() => {
-      setIsLoading(false);
-      addToast("App published to production! (Simulation)", "success");
-    }, 2000);
+    setIsPublishModalOpen(true);
   };
 
   const handleClearHistory = async () => {
@@ -318,6 +316,11 @@ export default function Home() {
             onClose={() => setIsGitHubModalOpen(false)}
             files={files}
             projectName={currentProject?.title || 'techwiser-project'}
+          />
+          <PublishModal
+            isOpen={isPublishModalOpen}
+            onClose={() => setIsPublishModalOpen(false)}
+            files={files}
           />
           <SettingsModal
             isOpen={isSettingsOpen}
