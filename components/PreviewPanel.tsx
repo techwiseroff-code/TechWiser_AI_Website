@@ -191,7 +191,7 @@ export default function App() {
                 </div>
               )}
 
-              <div className="absolute bottom-4 right-4 flex gap-2 z-50">
+              <div className="absolute top-[70px] right-4 flex flex-col md:flex-row gap-2 z-[60]">
                 {onFixError && <FixIssuesButton onFixError={onFixError} />}
                 <a
                   href="#"

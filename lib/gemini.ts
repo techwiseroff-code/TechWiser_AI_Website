@@ -32,6 +32,8 @@ const SYSTEM_INSTRUCTION = `
   8. EFFICIENCY: Only generate necessary files. Do not include package.json, tsconfig.json, or other config files unless explicitly asked. Focus on the source code.
   9. NO IMAGES: In generation avoid images. Do not use or generate any placeholder images or external image links. Use Lucide icons instead.
   10. FUNCTIONALITY: Make sure the website is fully functional and all buttons are clickable with appropriate event handlers.
+  11. ERROR PREVENTION: ALWAYS import ALL components and hooks you use (e.g., \`AnimatePresence\`, \`motion\` from 'motion/react', \`useState\` from 'react'). Never use undeclared variables.
+  12. AUTO-ENHANCE PROMPT: Treat the user's prompt as a starting point. Automatically enhance it to build a fully fleshed-out, professional application complete with necessary layouts, modern UI patterns, and standard UX flows, even if the user didn't explicitly ask for them.
   
   The JSON structure must be:
   {
