@@ -14,8 +14,12 @@ const spaceGrotesk = Space_Grotesk({
 });
 
 export const metadata: Metadata = {
-  title: 'TechWiser – AI Website & App Builder',
-  description: 'Futuristic AI-powered platform to build, preview, and refine websites and apps.',
+  title: 'TechWiser AI Builder - Create Next-Gen Websites & Apps with AI',
+  description: 'Futuristic AI-powered platform to build, preview, and refine stunning modern websites and apps instantly without coding. Empower your development workflow.',
+  metadataBase: new URL('https://www.techwiser.in'),
+  alternates: {
+    canonical: '/',
+  },
 };
 
 import { LanguageProvider } from '@/context/LanguageContext';

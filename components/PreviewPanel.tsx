@@ -56,9 +56,9 @@ export default function App() {
             <Sparkles size={12} />
             AI Ready to Build
           </div>
-          <h1 className="text-6xl font-bold tracking-tighter bg-gradient-to-b from-white to-white/40 bg-clip-text text-transparent">
+          <h2 className="text-6xl font-bold tracking-tighter bg-gradient-to-b from-white to-white/40 bg-clip-text text-transparent">
             What will you <span className="text-emerald-400">create</span> today?
-          </h1>
+          </h2>
           <p className="text-white/40 text-lg max-w-lg mx-auto">
             Describe your vision in the chat below. TechWiser will generate a full React application with Tailwind CSS in seconds.
           </p>

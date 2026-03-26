@@ -29,9 +29,9 @@ export const Header: React.FC<HeaderProps> = ({ onMenuClick, onSignIn }) => {
             <Zap size={20} className="text-black fill-current md:w-6 md:h-6 group-hover:scale-110 transition-transform" />
           </div>
           <div className="cursor-default">
-            <h1 className="text-base md:text-xl font-display font-bold tracking-tight glow-text">
+            <span className="text-base md:text-xl font-display font-bold tracking-tight glow-text block">
               Tech<span className="text-emerald-400">Wiser</span>
-            </h1>
+            </span>
             <div className="hidden sm:flex items-center gap-2">
               <p className="text-[8px] md:text-[10px] text-white/40 uppercase tracking-[0.2em] font-bold">Engine v2.0</p>
               <span className="px-1.5 py-0.5 rounded bg-emerald-500/10 border border-emerald-500/20 text-[8px] font-bold text-emerald-500 uppercase tracking-tighter">Pro</span>
