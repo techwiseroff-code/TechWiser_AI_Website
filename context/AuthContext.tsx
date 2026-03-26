@@ -1,18 +1,28 @@
 'use client';
 
 import React, { createContext, useContext, useState, useEffect } from 'react';
+import { auth } from '@/lib/firebase';
+import { 
+  signOut as firebaseSignOut, 
+  onAuthStateChanged,
+  User as FirebaseUser,
+  signInWithPopup,
+  GoogleAuthProvider
+} from 'firebase/auth';
+import { useMutation } from 'convex/react';
+import { api } from '@/convex/_generated/api';
 
 interface User {
   id: string;
   email: string;
   name: string;
   avatar?: string;
+  uid?: string;
 }
 
 interface AuthContextType {
   user: User | null;
-  login: (email: string, password: string) => Promise<void>;
-  signup: (email: string, password: string, name: string) => Promise<void>;
+  loginWithGoogle: () => Promise<void>;
   logout: () => void;
   isAuthenticated: boolean;
   isLoading: boolean;
@@ -23,68 +33,54 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [user, setUser] = useState<User | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  
+  const syncUser = useMutation(api.users.syncUser);
 
   useEffect(() => {
-    // Check for existing session
-    const storedUser = localStorage.getItem('techwiser_user');
-    if (storedUser) {
-      setTimeout(() => setUser(JSON.parse(storedUser)), 0);
-    }
-    setTimeout(() => setIsLoading(false), 0);
-  }, []);
-
-  const login = async (email: string, password: string) => {
-    // Simulate API call
-    return new Promise<void>((resolve, reject) => {
-      setTimeout(() => {
-        if (email && password) {
-          const mockUser = {
-            id: 'user_' + Date.now(),
-            email,
-            name: email.split('@')[0],
-            avatar: `https://api.dicebear.com/7.x/avataaars/svg?seed=${email}`
-          };
-          setUser(mockUser);
-          localStorage.setItem('techwiser_user', JSON.stringify(mockUser));
-          resolve();
-        } else {
-          reject(new Error('Invalid credentials'));
+    const unsubscribe = onAuthStateChanged(auth, async (firebaseUser: FirebaseUser | null) => {
+      if (firebaseUser) {
+        const userData = {
+          id: firebaseUser.uid,
+          uid: firebaseUser.uid,
+          email: firebaseUser.email || '',
+          name: firebaseUser.displayName || firebaseUser.email?.split('@')[0] || 'User',
+          avatar: firebaseUser.photoURL || `https://api.dicebear.com/7.x/avataaars/svg?seed=${firebaseUser.email}`,
+        };
+        setUser(userData);
+        
+        try {
+          // Sync with Convex
+          await syncUser({
+            uid: userData.uid,
+            email: userData.email,
+            name: userData.name,
+            picture: userData.avatar,
+          });
+        } catch (error) {
+          console.error('Error syncing user to backend:', error);
         }
-      }, 1000);
+      } else {
+        setUser(null);
+      }
+      setIsLoading(false);
     });
+
+    return () => unsubscribe();
+  }, [syncUser]);
+
+  const logout = async () => {
+    await firebaseSignOut(auth);
   };
 
-  const signup = async (email: string, password: string, name: string) => {
-    // Simulate API call
-    return new Promise<void>((resolve, reject) => {
-      setTimeout(() => {
-        if (email && password && name) {
-          const mockUser = {
-            id: 'user_' + Date.now(),
-            email,
-            name,
-            avatar: `https://api.dicebear.com/7.x/avataaars/svg?seed=${email}`
-          };
-          setUser(mockUser);
-          localStorage.setItem('techwiser_user', JSON.stringify(mockUser));
-          resolve();
-        } else {
-          reject(new Error('Invalid data'));
-        }
-      }, 1000);
-    });
-  };
-
-  const logout = () => {
-    setUser(null);
-    localStorage.removeItem('techwiser_user');
+  const loginWithGoogle = async () => {
+    const provider = new GoogleAuthProvider();
+    await signInWithPopup(auth, provider);
   };
 
   return (
     <AuthContext.Provider value={{
       user,
-      login,
-      signup,
+      loginWithGoogle,
       logout,
       isAuthenticated: !!user,
       isLoading

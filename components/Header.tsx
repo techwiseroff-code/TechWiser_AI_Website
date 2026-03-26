@@ -59,6 +59,7 @@ export const Header: React.FC<HeaderProps> = ({ onMenuClick, onSignIn }) => {
                   src={user.avatar || ''}
                   alt={user.name}
                   fill
+                  sizes="32px"
                   className="object-cover"
                   referrerPolicy="no-referrer"
                 />
