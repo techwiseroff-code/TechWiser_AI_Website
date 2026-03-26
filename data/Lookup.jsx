@@ -1,0 +1,150 @@
+export default {
+  SUGGSTIONS: ['Create Todo App', 'Create a Budget Track App', 'Create a Login and Signup page',
+    "Develop a Task Management App",
+    "Create a Fully Responsive Blog Platform",
+    "Design a Minimalistic Note-Taking App",
+    "Develop a Customizable Landing Page",
+    "Develop a Recipe Sharing Platform",
+    "Create a Fitness Tracking App",
+    "Develop a Personal Finance Management Tool",
+    "Create a Language Learning App",
+    "Build a Virtual Event Platform",
+    "Create a Music Streaming Service"
+  ],
+
+  DEFAULT_FILE: {
+    '/package.json': {
+      code: JSON.stringify({
+        name: "generated-project",
+        version: "1.0.0",
+        private: true,
+        main: "/src/index.js",
+        dependencies: {
+          "react": "^18.2.0",
+          "react-dom": "^18.2.0",
+          "react-scripts": "^5.0.1"
+        }
+      }, null, 2)
+    },
+    '/public/index.html':
+    {
+      code: `<!DOCTYPE html>
+            <html lang="en">
+            <head>
+              <meta charset="UTF-8">
+              <meta name="viewport" content="width=device-width, initial-scale=1.0">
+              <title>Document</title>
+              <script src="https://cdn.tailwindcss.com"></script>
+            </head>
+            <body>
+              <div id="root"></div>
+            </body>
+            </html>`
+    },
+    '/src/index.js': {
+      code: `import React, { StrictMode } from "react";
+import { createRoot } from "react-dom/client";
+import "./index.css";
+import App from "./App";
+
+const root = createRoot(document.getElementById("root"));
+root.render(
+  <StrictMode>
+    <App />
+  </StrictMode>
+);`
+    },
+    '/src/index.css': {
+      code: `@tailwind base;
+@tailwind components;
+@tailwind utilities;`
+    },
+    '/src/App.js': {
+      code: `import React, { useState, useEffect } from 'react';
+
+export default function App() {
+  const [text, setText] = useState('Analyzing idea');
+  
+  useEffect(() => {
+    const phases = ['Planning structure', 'Generating code', 'Styling UI', 'Adding logic', 'Finalizing'];
+    let i = 0;
+    const interval = setInterval(() => {
+      i = (i + 1) % phases.length;
+      setText(phases[i]);
+    }, 2000);
+    return () => clearInterval(interval);
+  }, []);
+
+  return (
+    <div className="flex flex-col items-center justify-center min-h-screen bg-[#060608] text-white font-sans overflow-hidden">
+      <div className="relative flex items-center justify-center mb-8">
+        <div className="absolute w-32 h-32 bg-violet-500/20 rounded-full blur-xl animate-pulse"></div>
+        <div className="w-12 h-12 border-[3px] border-white/5 border-t-violet-500 border-r-fuchsia-500 rounded-full animate-spin"></div>
+      </div>
+      
+      <div className="text-center z-10 relative">
+        <h2 className="text-2xl font-semibold mb-2 bg-gradient-to-r from-violet-400 to-fuchsia-400 text-transparent bg-clip-text inline-block">
+          TechWiser AI is working
+        </h2>
+        <div className="flex items-center justify-center gap-2 text-zinc-400 mt-2">
+          <div className="flex gap-1">
+            <div className="w-1.5 h-1.5 rounded-full bg-violet-500 animate-bounce" style={{ animationDelay: '0ms' }}></div>
+            <div className="w-1.5 h-1.5 rounded-full bg-violet-500 animate-bounce" style={{ animationDelay: '150ms' }}></div>
+            <div className="w-1.5 h-1.5 rounded-full bg-violet-500 animate-bounce" style={{ animationDelay: '300ms' }}></div>
+          </div>
+          <span className="text-sm font-medium ml-2 w-[120px] text-left">{text}...</span>
+        </div>
+      </div>
+    </div>
+  );
+}`
+    },
+    '/tailwind.config.js': {
+      code: `/** @type {import('tailwindcss').Config} */
+module.exports = {
+  content: [
+    "./src/**/*.{js,jsx,ts,tsx}",
+  ],
+  theme: {
+    extend: {},
+  },
+  plugins: [],
+}`
+    },
+    '/postcss.config.js': {
+      code: `/** @type {import('postcss-load-config').Config} */
+const config = {
+  plugins: {
+    tailwindcss: {},
+  },
+};
+
+export default config;
+`
+    }
+
+  },
+
+  DEPENDANCY: {
+    "@google/generative-ai": "^0.21.0",
+    "@heroicons/react": "^1.0.6",
+    "@headlessui/react": "^1.7.17",
+    "autoprefixer": "^10.0.0",
+    "firebase": "^11.1.0",
+    "framer-motion": "^10.0.0",
+    "lucide-react": "latest",
+    "postcss": "^8",
+    "react": "^18.2.0",
+    "react-dom": "^18.2.0",
+    "react-icons": "^5.0.0",
+    "react-router-dom": "latest",
+    "react-toastify": "^10.0.0",
+    "tailwind-merge": "^2.4.0",
+    "tailwindcss": "^3.4.1",
+    "tailwindcss-animate": "^1.0.7",
+    "uuid4": "^2.0.3",
+    "uuidv4": "^6.2.13",
+    "uuid": "^11.1.0",
+    "@mui/material": "^6.4.6"
+  }
+}

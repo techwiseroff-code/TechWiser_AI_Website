@@ -36,7 +36,7 @@ export default function Home() {
   const { t } = useLanguage();
   const { openRouterKey, geminiKey, selectedModel, useCustomGemini } = useSettings();
   const { user } = useAuth();
-  const userToken = user?.id || 'anonymous-user';
+  const userToken = user?.id;
 
   const [isLoading, setIsLoading] = useState(false);
   const [currentProjectId, setCurrentProjectId] = useState<string | null>(null);
@@ -58,7 +58,7 @@ export default function Home() {
 
   const projects = convexWorkspaces?.map(w => ({
     id: w._id,
-    title: w.messages?.[0]?.content?.slice(0, 30) || 'New Project',
+    title: w.messages?.[0]?.content?.replace(/^\[Respond in.*?\]\s*/i, '')?.slice(0, 30) || 'New Project',
     date: new Date(w._creationTime).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
     files: w.fileData || [],
     lastPrompt: w.messages?.[w.messages.length - 2]?.content || '',
@@ -115,6 +115,11 @@ export default function Home() {
 
 
   const handleSendMessage = async (message: string) => {
+    if (!user) {
+      setIsAuthModalOpen(true);
+      return;
+    }
+
     setIsLoading(true);
     setShowWorkspace(true);
 
@@ -171,6 +176,10 @@ export default function Home() {
   };
 
   const handleNewProject = () => {
+    if (!user) {
+      setIsAuthModalOpen(true);
+      return;
+    }
     setCurrentProjectId(null);
     setShowWorkspace(true);
     addToast("Started new workspace");
@@ -334,7 +343,13 @@ export default function Home() {
                 transition={{ duration: 0.5, ease: [0.22, 1, 0.36, 1] }}
                 className="flex-1 overflow-y-auto custom-scrollbar relative z-10"
               >
-                <LandingPage onStart={() => setShowWorkspace(true)} />
+                <LandingPage onStart={() => {
+                  if (!user) {
+                    setIsAuthModalOpen(true);
+                  } else {
+                    setShowWorkspace(true);
+                  }
+                }} />
               </motion.div>
             ) : (
               <motion.div

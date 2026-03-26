@@ -2,12 +2,10 @@ import type {NextConfig} from 'next';
 
 const nextConfig: NextConfig = {
   reactStrictMode: true,
-  eslint: {
-    ignoreDuringBuilds: true,
-  },
   typescript: {
     ignoreBuildErrors: false,
   },
+  turbopack: {},
   // Allow access to remote image placeholder.
   images: {
     remotePatterns: [
@@ -20,6 +18,12 @@ const nextConfig: NextConfig = {
       {
         protocol: 'https',
         hostname: 'api.dicebear.com',
+        port: '',
+        pathname: '/**',
+      },
+      {
+        protocol: 'https',
+        hostname: 'lh3.googleusercontent.com',
         port: '',
         pathname: '/**',
       },
