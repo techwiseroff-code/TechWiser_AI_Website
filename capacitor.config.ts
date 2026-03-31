@@ -8,6 +8,7 @@ const config: CapacitorConfig = {
   // Point to your live deployed website
   server: {
     url: 'https://www.techwiser.in',
+    androidScheme: "https",
     cleartext: true,
   },
 

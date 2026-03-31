@@ -213,3 +213,41 @@ export const generateCode = async (
     throw new Error(error?.message || "Failed to communicate with the Gemini API. Please check your API key and internet connection.");
   }
 };
+
+/**
+ * Enhanced Prompting: Turns a short idea into a professional specification.
+ */
+export const enhancePrompt = async (
+  userInput: string,
+  config: AIConfig = {}
+): Promise<string> => {
+  const model = config.model || 'gemini-2.0-flash'; // Use 2.0 Flash for speed and intelligence
+  const apiKey = config.geminiKey || process.env.NEXT_PUBLIC_GEMINI_API_KEY;
+
+  if (!apiKey) return userInput; // Fallback if no key
+
+  const ai = new GoogleGenAI({ apiKey });
+  
+  const systemPrompt = `
+    You are the "Visionary" engine for TechWiser. Your job is to take a short, simple user prompt and expand it into a comprehensive, professional Product Requirement Document (PRD).
+
+    RULES:
+    1. Fill the Gaps: If they say "Todo app", define a modern UI, drag-and-drop, priority labels, and dark mode.
+    2. Premium Design: Describe a "Glassmorphism" or "Modern SaaS" aesthetic with dynamic gradients and micro-interactions.
+    3. User Experience: Detail at least 4 key features that make it a "pro" app.
+    4. Structure: Output the enhanced prompt as a cohesive, descriptive paragraph of 100-150 words.
+    5. No Commentary: Only output the enhanced prompt text itself.
+  `;
+
+  try {
+    const response = await ai.models.generateContent({
+      model: model,
+      contents: [{ role: "user", parts: [{ text: `${systemPrompt}\n\nUser Request: ${userInput}` }] }]
+    });
+
+    return response.text || userInput;
+  } catch (error) {
+    console.error("Prompt enhancement failed:", error);
+    return userInput; // Fallback to original
+  }
+};

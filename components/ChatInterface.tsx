@@ -9,9 +9,16 @@ import { useLanguage, Language } from '@/context/LanguageContext';
 interface ChatInterfaceProps {
   onSendMessage: (message: string) => void;
   isLoading: boolean;
+  autoEnhance?: boolean;
+  onToggleEnhance?: () => void;
 }
 
-export const ChatInterface: React.FC<ChatInterfaceProps> = ({ onSendMessage, isLoading }) => {
+export const ChatInterface: React.FC<ChatInterfaceProps> = ({ 
+  onSendMessage, 
+  isLoading,
+  autoEnhance = false,
+  onToggleEnhance
+}) => {
   const { language, setLanguage, t } = useLanguage();
   const [input, setInput] = useState('');
   const [isRecording, setIsRecording] = useState(false);
@@ -94,6 +101,27 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({ onSendMessage, isL
               {lang.name}
             </button>
           ))}
+        </div>
+        
+        <div className="flex items-center gap-2 ml-4 bg-white/5 p-1 rounded-full border border-white/10 shadow-lg backdrop-blur-md px-3">
+          <Sparkles size={12} className={cn("transition-colors", autoEnhance ? "text-emerald-400" : "text-white/20")} />
+          <button
+            type="button"
+            onClick={onToggleEnhance}
+            className="relative w-8 h-4 rounded-full bg-white/10 transition-colors"
+          >
+            <motion.div
+              animate={{ x: autoEnhance ? 16 : 0 }}
+              transition={{ type: "spring", stiffness: 500, damping: 30 }}
+              className={cn(
+                "absolute top-0.5 left-0.5 w-3 h-3 rounded-full transition-colors",
+                autoEnhance ? "bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.5)]" : "bg-white/40"
+              )}
+            />
+          </button>
+          <span className={cn("text-[8px] font-bold uppercase tracking-widest transition-colors", autoEnhance ? "text-emerald-400" : "text-white/20")}>
+            {autoEnhance ? "Auto-Enhance ON" : "Enhance"}
+          </span>
         </div>
       </div>
       <form 

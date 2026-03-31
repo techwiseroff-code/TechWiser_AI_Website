@@ -123,6 +123,8 @@ export default function App() {
         theme="dark"
         files={sandpackFiles}
         options={{
+          initMode: "lazy",
+          recompileMode: "immediate",
           externalResources: ["https://cdn.tailwindcss.com"],
           classes: {
             "sp-layout": "!h-full !border-none !bg-transparent",

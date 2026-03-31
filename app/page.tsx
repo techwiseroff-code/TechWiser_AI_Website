@@ -50,6 +50,7 @@ export default function Home() {
   const [isPublishModalOpen, setIsPublishModalOpen] = useState(false);
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
+  const [autoEnhance, setAutoEnhance] = useState(true); // Default to on for new users
 
   // Convex hooks
   const convexWorkspaces = useQuery(api.workspace.GetAllWorkspaces, { userToken });
@@ -120,6 +121,23 @@ export default function Home() {
     setShowWorkspace(true);
 
     try {
+      let finalPrompt = message;
+      
+      // Auto-enhance prompt if toggled ON and it's not a tiny instruction (like "fix button")
+      if (autoEnhance && message.length > 5 && message.length < 500 && !message.includes("Fix the following error")) {
+        try {
+          const enhanced = await import('@/lib/gemini').then(m => m.enhancePrompt(message, {
+            geminiKey: useCustomGemini ? geminiKey : undefined,
+            openRouterKey,
+            model: selectedModel
+          }));
+          finalPrompt = enhanced;
+          addToast("Prompt automatically enhanced!", "info");
+        } catch (e) {
+          console.warn("Enhancement failed, using original prompt", e);
+        }
+      }
+
       // Get history from current project if it exists
       const history = currentProject?.chatHistory || [];
       
@@ -128,7 +146,7 @@ export default function Home() {
         ? `\n\nCURRENT PROJECT CONTEXT:\n${files.map((f: GeneratedFile) => `File: ${f.path}\nContent:\n${f.content}`).join('\n\n')}\n`
         : "";
 
-      const promptWithContext = `${message}${fileContext}`;
+      const promptWithContext = `${finalPrompt}${fileContext}`;
 
       const result = await generateCode(promptWithContext, history, {
         geminiKey: useCustomGemini ? geminiKey : undefined,
@@ -500,7 +518,12 @@ export default function Home() {
                   {/* Chat Interface - Sticky at bottom */}
                   <div className="absolute bottom-0 left-0 right-0 z-30 bg-gradient-to-t from-[#050505] via-[#050505] to-transparent pt-12 pb-4 md:pb-6 px-4 pointer-events-none">
                     <div className="max-w-4xl mx-auto pointer-events-auto">
-                      <ChatInterface onSendMessage={handleSendMessage} isLoading={isLoading} />
+                      <ChatInterface 
+                        onSendMessage={handleSendMessage} 
+                        isLoading={isLoading} 
+                        autoEnhance={autoEnhance}
+                        onToggleEnhance={() => setAutoEnhance(!autoEnhance)}
+                      />
                     </div>
                   </div>
                 </div>
