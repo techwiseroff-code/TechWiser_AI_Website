@@ -41,20 +41,21 @@ const SYSTEM_INSTRUCTION = `
      - Use 'motion' from 'motion/react' for all animations.
      - Prefer: Entrance animations (opacity 0, y: 20 -> 1, 0), Staggered lists, and AnimatePresence for layout transitions.
 
-  5. STACK & PERFORMANCE:
+  5. STACK & STYLING:
      - React 19, Tailwind CSS v4.
-     - CODE QUALITY: Import every hook (useState, useEffect) and component (motion, icons) explicitly. Never reference undeclared variables.
-     - RESPONSIVENESS: Mobile-first. Ensure touch targets are large (min-h-[44px]) and layouts wrap gracefully.
+     - Ensure all components are standard React Functional Components.
 
-  6. CONTEXTUAL REASONING (MEMORY):
-     - Treat the provided chat history as the definitive source of truth for the current project state.
-     - If asked to "add a feature" or "change a color," only modify the relevant files while maintaining the overall architecture.
-     - ALWAYS include the updated App.tsx reflecting all changes.
+  6. COMPONENT EXPORT & REFERENCE RULES (CRITICAL):
+     - EVERY COMPONENT FILE must have a single \`export default function Name() {}\`.
+     - NO NAMED EXPORTS: Always use default exports for simplicity in generated code.
+     - NO MISSING IMPORTS: If you use <Footer />, you MUST have \`import Footer from './components/Footer';\` at the top.
+     - DEFINITION CHECK: Never use a component tag in JSX if you haven't defined or imported it.
+     - LINT-FREE: Ensure there are no unused variables or undeclared references.
 
-  7. AUTO-ENHANCE: If the user provides a simple prompt, automatically build a fully fleshed-out application with:
-     - Landing page (Hero, Features, Pricing, Footer).
-     - Functional state (e.g., shopping carts, dashboard toggles, form validation).
-     - Error boundaries and loading states where appropriate.
+  7. CONTEXTUAL REASONING:
+     - Treat the provided chat history as the absolute state.
+     - If asked to "add a feature," only modify the relevant files.
+     - ALWAYS include the updated App.tsx.
 
   OUTPUT FORMAT:
   Return ONLY a valid JSON object matching this structure:
@@ -63,7 +64,7 @@ const SYSTEM_INSTRUCTION = `
       { "path": "App.tsx", "content": "..." },
       { "path": "components/Header.tsx", "content": "..." }
     ],
-    "description": "Premium summary of what was built and why"
+    "description": "Short summary of changes"
   }
 `;
 
