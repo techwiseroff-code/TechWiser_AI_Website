@@ -7,10 +7,13 @@ import {
   onAuthStateChanged,
   User as FirebaseUser,
   signInWithPopup,
+  signInWithCredential,
   GoogleAuthProvider
 } from 'firebase/auth';
 import { useMutation } from 'convex/react';
 import { api } from '@/convex/_generated/api';
+import { Capacitor } from '@capacitor/core';
+import { FirebaseAuthentication } from '@capacitor-firebase/authentication';
 
 interface User {
   id: string;
@@ -85,8 +88,25 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       console.error('Firebase Auth is not initialized due to missing API keys');
       return;
     }
-    const provider = new GoogleAuthProvider();
-    await signInWithPopup(auth, provider);
+
+    try {
+      if (Capacitor.isNativePlatform()) {
+        // Native Google Login for Android/iOS
+        const result = await FirebaseAuthentication.signInWithGoogle();
+        
+        if (result.credential?.idToken) {
+          const credential = GoogleAuthProvider.credential(result.credential.idToken);
+          await signInWithCredential(auth, credential);
+        }
+      } else {
+        // Standard Web Login for Browser
+        const provider = new GoogleAuthProvider();
+        await signInWithPopup(auth, provider);
+      }
+    } catch (error) {
+      console.error('Login error:', error);
+      throw error;
+    }
   };
 
   return (
