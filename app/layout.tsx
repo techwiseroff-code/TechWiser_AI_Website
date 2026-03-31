@@ -22,6 +22,9 @@ export const metadata: Metadata = {
   alternates: {
     canonical: '/',
   },
+  icons: {
+    icon: '/favicon.png',
+  },
 };
 
 import { LanguageProvider } from '@/context/LanguageContext';

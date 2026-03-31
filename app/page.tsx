@@ -122,8 +122,15 @@ export default function Home() {
     try {
       // Get history from current project if it exists
       const history = currentProject?.chatHistory || [];
+      
+      // Build context of current files to provide to the AI
+      const fileContext = files.length > 0 
+        ? `\n\nCURRENT PROJECT CONTEXT:\n${files.map(f => `File: ${f.path}\nContent:\n${f.content}`).join('\n\n')}\n`
+        : "";
 
-      const result = await generateCode(message, history, {
+      const promptWithContext = `${message}${fileContext}`;
+
+      const result = await generateCode(promptWithContext, history, {
         geminiKey: useCustomGemini ? geminiKey : undefined,
         openRouterKey,
         model: selectedModel
@@ -133,10 +140,13 @@ export default function Home() {
         throw new Error("The AI model failed to return a proper code structure. Please try a different model or rephrase your prompt.");
       }
 
+      // We store the description AND a summary of files in history for better long-term memory
+      const historyContent = `${result.description}\n\nFiles Updated: ${result.files.map(f => f.path).join(', ')}`;
+
       const newHistory = [
         ...history,
         { role: 'user', content: message },
-        { role: 'model', content: result.description || 'Generated code' } // Using description as summary
+        { role: 'model', content: historyContent }
       ];
 
       if (currentProjectId) {

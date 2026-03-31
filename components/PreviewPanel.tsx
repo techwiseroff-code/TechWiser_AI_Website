@@ -133,6 +133,7 @@ export default function App() {
           dependencies: {
             "lucide-react": "latest",
             "motion": "latest",
+            "framer-motion": "latest",
             "clsx": "latest",
             "tailwind-merge": "latest"
           }
