@@ -62,7 +62,7 @@ export default function Home() {
     id: w._id,
     title: w.messages?.[0]?.content?.replace(/^\[Respond in.*?\]\s*/i, '')?.slice(0, 30) || 'New Project',
     date: new Date(w._creationTime).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-    files: w.fileData || [],
+    files: (w.fileData as GeneratedFile[]) || [],
     lastPrompt: w.messages?.[w.messages.length - 2]?.content || '',
     chatHistory: w.messages || []
   })) || [];
@@ -125,7 +125,7 @@ export default function Home() {
       
       // Build context of current files to provide to the AI
       const fileContext = files.length > 0 
-        ? `\n\nCURRENT PROJECT CONTEXT:\n${files.map(f => `File: ${f.path}\nContent:\n${f.content}`).join('\n\n')}\n`
+        ? `\n\nCURRENT PROJECT CONTEXT:\n${files.map((f: GeneratedFile) => `File: ${f.path}\nContent:\n${f.content}`).join('\n\n')}\n`
         : "";
 
       const promptWithContext = `${message}${fileContext}`;
@@ -233,7 +233,7 @@ export default function Home() {
 
   const handleCopyCode = () => {
     if (files.length === 0) return;
-    const allCode = files.map((f: any) => `// ${f.path}\n${f.content}`).join('\n\n');
+    const allCode = files.map((f: GeneratedFile) => `// ${f.path}\n${f.content}`).join('\n\n');
     navigator.clipboard.writeText(allCode);
     addToast("Code copied to clipboard!", "success");
   };

@@ -5,7 +5,7 @@ const nextConfig: NextConfig = {
   typescript: {
     ignoreBuildErrors: false,
   },
-  turbopack: {},
+  // turbopack: {},
   experimental: {
     optimizePackageImports: [
       "@codesandbox/sandpack-react",
