@@ -74,7 +74,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onStart }) => {
           {[
             { icon: <Zap className="text-yellow-400" />, title: "Instant Build", desc: "From prompt to app in under 30 seconds." },
             { icon: <Globe className="text-blue-400" />, title: "Multi-Language", desc: "Build in English, Hindi, or Marathi." },
-            { icon: <Cpu className="text-purple-400" />, title: "AI Architect", desc: "Powered by Gemini 3.1 Pro reasoning." },
+            { icon: <Cpu className="text-purple-400" />, title: "AI Architect", desc: "Powered by Gemini & Openrouter Api's" },
             { icon: <Layout className="text-emerald-400" />, title: "Responsive", desc: "Mobile-first designs by default." }
           ].map((feature, i) => (
             <motion.div
