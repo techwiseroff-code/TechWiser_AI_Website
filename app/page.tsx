@@ -168,6 +168,18 @@ export default function Home() {
       ];
 
       if (currentProjectId) {
+        // Merge the AI's returned files with the existing files in the project
+        // This ensures if the AI only outputs the fixed file, we don't delete the rest of the project.
+        const mergedFiles = [...files];
+        result.files.forEach(newFile => {
+           const existingIdx = mergedFiles.findIndex(f => f.path === newFile.path);
+           if (existingIdx >= 0) {
+              mergedFiles[existingIdx] = newFile;
+           } else {
+              mergedFiles.push(newFile);
+           }
+        });
+
         // Update existing project
         await updateWorkspace({
           workspaceId: currentProjectId as any,
@@ -175,7 +187,7 @@ export default function Home() {
         });
         await updateFiles({
           workspaceId: currentProjectId as any,
-          files: result.files
+          files: mergedFiles
         });
       } else {
         // Create new project

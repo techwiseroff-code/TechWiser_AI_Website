@@ -57,8 +57,9 @@ const SYSTEM_INSTRUCTION = `
 
   7. CONTEXTUAL REASONING:
      - Treat the provided chat history as the absolute state.
-     - If asked to "add a feature," only modify the relevant files.
-     - ALWAYS include the updated App.tsx.
+     - If asked to "add a feature" or "fix an error", ONLY output the exact files you are modifying.
+     - We will handle merging your generated files with the existing project automatically.
+     - NEVER output the entire project again unless you are making full-scale architectural changes.
 
   8. CODE FORMATTING (CRITICAL):
      - ALL code MUST be beautifully formatted and indented.
@@ -91,13 +92,19 @@ function parseMarkdownResponse(content: string): GenerationResult {
   const result: GenerationResult = { files: [], description: "Code generated successfully." };
   
   // Extract summary
-  const summaryMatch = content.match(/###\s*SUMMARY\s*\n([\s\S]*?)(?=###\s*FILE:|$)/i);
+  const summaryMatch = content.match(/(?:###)?\s*SUMMARY\s*\n([\s\S]*?)(?=(?:###)?\s*FILE:|$)/i);
   if (summaryMatch && summaryMatch[1]) {
     result.description = summaryMatch[1].trim();
+  } else {
+    // If no strict SUMMARY marker, try to extract the first paragraph before any code
+    const firstParagraph = content.split('```')[0].replace(/###.*/g, '').trim();
+    if (firstParagraph.length > 0) {
+      result.description = firstParagraph;
+    }
   }
 
-  // Extract all files
-  const fileRegex = /###\s*FILE:\s*(.+?)\s*\n```[a-z]*\n([\s\S]*?)```/gi;
+  // Extract all files using strict markdown pattern
+  const fileRegex = /(?:###)?\s*FILE:\s*([^\n]+?)\s*\n```[a-zA-Z0-9_-]*\s*\n([\s\S]*?)```/gi;
   let match;
   while ((match = fileRegex.exec(content)) !== null) {
     result.files.push({
@@ -106,7 +113,7 @@ function parseMarkdownResponse(content: string): GenerationResult {
     });
   }
 
-  // Fallback: If no files were found using the strict markdown pattern, try to parse as JSON just in case the model ignored instructions.
+  // Fallback 1: Try JSON format if strict markdown pattern found nothing
   if (result.files.length === 0) {
     try {
       const jsonMatch = content.match(/```(?:json)?\s*([\s\S]*?)```/) || content.match(/\{[\s\S]*\}/);
@@ -117,7 +124,35 @@ function parseMarkdownResponse(content: string): GenerationResult {
       }
     } catch {}
     
-    throw new Error("Could not parse the AI's generated code structure. Please try again.");
+    // Fallback 2: Simple code block extraction heuristic (last resort)
+    const genericCodeRegex = /```[a-zA-Z0-9_-]*\s*\n([\s\S]*?)```/gi;
+    let genericMatch;
+    let fileIdx = 0;
+    while ((genericMatch = genericCodeRegex.exec(content)) !== null) {
+      const codeContent = genericMatch[1].trim();
+      if (codeContent.length > 0) {
+        // Try to guess file name if there's a comment at the top
+        const firstLine = codeContent.split('\n')[0].trim();
+        let filename = fileIdx === 0 ? "App.tsx" : `components/Component${fileIdx}.tsx`;
+        
+        if (firstLine.includes("//") || firstLine.includes("/*")) {
+           const potentialName = firstLine.replace(/[\/\*]/g, '').trim();
+           if (/\.(tsx|ts|jsx|js|css)$/i.test(potentialName)) {
+             filename = potentialName;
+           }
+        }
+        
+        result.files.push({
+          path: filename,
+          content: codeContent
+        });
+        fileIdx++;
+      }
+    }
+    
+    if (result.files.length === 0) {
+      throw new Error("Could not parse the AI's generated code structure. Please try again.");
+    }
   }
 
   return result;
