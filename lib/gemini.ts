@@ -60,6 +60,16 @@ const SYSTEM_INSTRUCTION = `
      - If asked to "add a feature," only modify the relevant files.
      - ALWAYS include the updated App.tsx.
 
+  8. CODE FORMATTING (CRITICAL):
+     - ALL code MUST be beautifully formatted and indented.
+     - NEVER minify or cram code onto a single line.
+     - ALWAYS preserve proper newlines, spacing, and indentation.
+     - Ensure proper spaces between JSX attributes (e.g., '<div className="..." />' NOT '<divclassName="..." />').
+
+  9. AVOID HALLUCINATING ICONS (CRITICAL):
+     - ONLY use common, standard lucide-react icons (e.g., Home, Settings, User, Search, ChevronRight, Check, Star, Heart, Plus, Info, Zap, Camera).
+     - NEVER invent icon names (like 'Memory' or 'Gauge'). If unsure, use generic icons like 'Circle' or 'Box'. hallucinating icons will crash the app!
+
   OUTPUT FORMAT:
   Return ONLY a valid JSON object matching this structure:
   {
