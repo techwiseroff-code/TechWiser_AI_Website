@@ -71,15 +71,57 @@ const SYSTEM_INSTRUCTION = `
      - NEVER invent icon names (like 'Memory' or 'Gauge'). If unsure, use generic icons like 'Circle' or 'Box'. hallucinating icons will crash the app!
 
   OUTPUT FORMAT:
-  Return ONLY a valid JSON object matching this structure:
-  {
-    "files": [
-      { "path": "App.tsx", "content": "..." },
-      { "path": "components/Header.tsx", "content": "..." }
-    ],
-    "description": "Short summary of changes"
-  }
+  Do NOT use JSON. Return your response precisely in the following Markdown format. This is required for our parser.
+  
+  ### SUMMARY
+  Short summary of changes
+  
+  ### FILE: App.tsx
+  \`\`\`tsx
+  // properly formatted code with newlines
+  \`\`\`
+  
+  ### FILE: components/Header.tsx
+  \`\`\`tsx
+  // properly formatted code with newlines
+  \`\`\`
 `;
+
+function parseMarkdownResponse(content: string): GenerationResult {
+  const result: GenerationResult = { files: [], description: "Code generated successfully." };
+  
+  // Extract summary
+  const summaryMatch = content.match(/###\s*SUMMARY\s*\n([\s\S]*?)(?=###\s*FILE:|$)/i);
+  if (summaryMatch && summaryMatch[1]) {
+    result.description = summaryMatch[1].trim();
+  }
+
+  // Extract all files
+  const fileRegex = /###\s*FILE:\s*(.+?)\s*\n```[a-z]*\n([\s\S]*?)```/gi;
+  let match;
+  while ((match = fileRegex.exec(content)) !== null) {
+    result.files.push({
+      path: match[1].trim(),
+      content: match[2].trim()
+    });
+  }
+
+  // Fallback: If no files were found using the strict markdown pattern, try to parse as JSON just in case the model ignored instructions.
+  if (result.files.length === 0) {
+    try {
+      const jsonMatch = content.match(/```(?:json)?\s*([\s\S]*?)```/) || content.match(/\{[\s\S]*\}/);
+      const extractedContent = jsonMatch ? (jsonMatch[1] !== undefined ? jsonMatch[1] : jsonMatch[0]) : content;
+      const parsed = JSON.parse(extractedContent);
+      if (parsed.files && Array.isArray(parsed.files)) {
+        return parsed;
+      }
+    } catch {}
+    
+    throw new Error("Could not parse the AI's generated code structure. Please try again.");
+  }
+
+  return result;
+}
 
 const callOpenRouter = async (prompt: string, history: any[], config: AIConfig): Promise<GenerationResult> => {
   const apiKey = config.openRouterKey || process.env.NEXT_PUBLIC_OPENROUTER_API_KEY;
@@ -88,7 +130,7 @@ const callOpenRouter = async (prompt: string, history: any[], config: AIConfig):
   }
 
   const messages = [
-    { role: "system", content: SYSTEM_INSTRUCTION + "\n\nRETURN JSON ONLY." },
+    { role: "system", content: SYSTEM_INSTRUCTION },
     ...history.map(msg => ({ role: msg.role === 'model' ? 'assistant' : 'user', content: msg.content })),
     { role: "user", content: prompt }
   ];
@@ -113,12 +155,10 @@ const callOpenRouter = async (prompt: string, history: any[], config: AIConfig):
       const errorData = await response.json();
       errorMessage = errorData.error?.message || JSON.stringify(errorData);
     } catch {
-      // If the error isn't JSON, try to read it as text
       const errorText = await response.text();
       if (errorText) errorMessage = errorText;
     }
 
-    // Check for provider limits/errors
     if (response.status === 429 || errorMessage.toLowerCase().includes("limit") || errorMessage.toLowerCase().includes("quota")) {
       throw new Error(`OpenRouter Quota Exceeded (${config.model}): Please check your API credits or try a different free model.`);
     }
@@ -129,23 +169,7 @@ const callOpenRouter = async (prompt: string, history: any[], config: AIConfig):
   const data = await response.json();
   const content = data.choices[0].message.content;
 
-  try {
-    return JSON.parse(content);
-  } catch (e) {
-    // Try to extract JSON if wrapped in markdown
-    const jsonMatch = content.match(/```(?:json)?\s*([\s\S]*?)```/) || content.match(/\{[\s\S]*\}/);
-    if (jsonMatch) {
-      const extractedContent = jsonMatch[1] !== undefined ? jsonMatch[1] : jsonMatch[0];
-      try {
-        return JSON.parse(extractedContent);
-      } catch (parseAttemptError) {
-        console.error("Failed to parse extracted JSON:", parseAttemptError, extractedContent.substring(0, 100));
-        throw new Error("Could not parse the AI's generated code structure. Please try again.");
-      }
-    }
-    console.error("Failed to parse OpenRouter response", e, content.substring(0, 100));
-    throw new Error("Invalid format returned from AI model. Please try again.");
-  }
+  return parseMarkdownResponse(content);
 };
 
 export const generateCode = async (
@@ -186,37 +210,13 @@ export const generateCode = async (
     const response = await ai.models.generateContent({
       model: model, // Use the selected Gemini model
       contents: contents,
-      config: {
-        responseMimeType: "application/json",
-        responseSchema: {
-          type: Type.OBJECT,
-          properties: {
-            files: {
-              type: Type.ARRAY,
-              items: {
-                type: Type.OBJECT,
-                properties: {
-                  path: { type: Type.STRING },
-                  content: { type: Type.STRING }
-                },
-                required: ["path", "content"]
-              }
-            },
-            description: { type: Type.STRING }
-          },
-          required: ["files", "description"]
-        }
-      }
+      // Removed responseMimeType and responseSchema to prevent aggressive JSON minification
     });
 
-    try {
-      const text = response.text;
-      if (!text) throw new Error("No response from AI");
-      return JSON.parse(text) as GenerationResult;
-    } catch (error) {
-      console.error("Failed to parse AI response:", error);
-      throw new Error("The AI returned an invalid response format. Please try again.");
-    }
+    const content = response.text;
+    if (!content) throw new Error("No response from AI");
+
+    return parseMarkdownResponse(content);
   } catch (error: any) {
     console.error("Gemini API Error:", error);
     // Handle specific API errors like 429 Quota Exceeded
