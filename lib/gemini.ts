@@ -47,8 +47,11 @@ const SYSTEM_INSTRUCTION = `
 
   6. COMPONENT EXPORT & REFERENCE RULES (CRITICAL):
      - EVERY COMPONENT FILE must have a single \`export default function Name() {}\`.
-     - NO NAMED EXPORTS: Always use default exports for simplicity in generated code.
-     - NO MISSING IMPORTS: If you use <Footer />, you MUST have \`import Footer from './components/Footer';\` at the top.
+     - NO NAMED EXPORTS for your components: Always use default exports for simplicity.
+     - EXACT COMPONENT IMPORTS: Always use default imports for your components (e.g., \`import Footer from './components/Footer';\`). NEVER use named imports for default exports.
+     - LUCIDE ICONS MUST BE NAMED IMPORTS: If you use lucide-react, import them as \`import { IconName } from 'lucide-react';\` NEVER use default imports for lucide icons.
+     - FRAMER MOTION MUST BE A NAMED IMPORT: Use \`import { motion } from 'framer-motion';\` (NOT default import).
+     - NO MISSING IMPORTS: If you use <Footer />, you MUST have it imported at the top.
      - DEFINITION CHECK: Never use a component tag in JSX if you haven't defined or imported it.
      - LINT-FREE: Ensure there are no unused variables or undeclared references.
 
