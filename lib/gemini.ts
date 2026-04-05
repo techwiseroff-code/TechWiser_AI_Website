@@ -270,12 +270,8 @@ export const enhancePrompt = async (
   userInput: string,
   config: AIConfig = {}
 ): Promise<string> => {
-  const model = config.model || 'gemini-2.0-flash'; // Use 2.0 Flash for speed and intelligence
-  const apiKey = config.geminiKey || process.env.NEXT_PUBLIC_GEMINI_API_KEY;
-
-  if (!apiKey) return userInput; // Fallback if no key
-
-  const ai = new GoogleGenAI({ apiKey });
+  const model = config.model || 'gemini-2.5-flash';
+  const isGeminiModel = GEMINI_MODELS.some(m => m.id === model);
   
   const systemPrompt = `
     You are the "Visionary" engine for TechWiser. Your job is to take a short, simple user prompt and expand it into a comprehensive, professional Product Requirement Document (PRD).
@@ -285,18 +281,49 @@ export const enhancePrompt = async (
     2. Premium Design: Describe a "Glassmorphism" or "Modern SaaS" aesthetic with dynamic gradients and micro-interactions.
     3. User Experience: Detail at least 4 key features that make it a "pro" app.
     4. Structure: Output the enhanced prompt as a cohesive, descriptive paragraph of 100-150 words.
-    5. No Commentary: Only output the enhanced prompt text itself.
+    5. No Commentary: Only output the enhanced prompt text itself. Do not use quotes or introductory phrases.
   `;
 
-  try {
-    const response = await ai.models.generateContent({
-      model: model,
-      contents: [{ role: "user", parts: [{ text: `${systemPrompt}\n\nUser Request: ${userInput}` }] }]
+  if (!isGeminiModel) {
+    const apiKey = config.openRouterKey || process.env.NEXT_PUBLIC_OPENROUTER_API_KEY;
+    if (!apiKey) throw new Error("OpenRouter API Key missing for enhancement");
+
+    const response = await fetch("https://openrouter.ai/api/v1/chat/completions", {
+      method: "POST",
+      headers: {
+        "Authorization": `Bearer ${apiKey}`,
+        "Content-Type": "application/json",
+        "HTTP-Referer": typeof window !== 'undefined' ? window.location.origin : "https://techwiser.ai",
+        "X-Title": "TechWiser"
+      },
+      body: JSON.stringify({
+        model: model,
+        messages: [
+          { role: "system", content: systemPrompt },
+          { role: "user", content: userInput }
+        ]
+      })
     });
 
-    return response.text || userInput;
-  } catch (error) {
-    console.error("Prompt enhancement failed:", error);
-    return userInput; // Fallback to original
+    if (!response.ok) throw new Error(`OpenRouter enhancement failed: ${response.statusText}`);
+    const data = await response.json();
+    if (!data.choices || !data.choices[0] || !data.choices[0].message.content) {
+      throw new Error("Invalid response from OpenRouter");
+    }
+    return data.choices[0].message.content.trim();
   }
+
+  // Use Gemini Direct
+  const apiKey = config.geminiKey || process.env.NEXT_PUBLIC_GEMINI_API_KEY;
+  if (!apiKey) throw new Error("Gemini API Key missing for enhancement");
+
+  const ai = new GoogleGenAI({ apiKey });
+  
+  const response = await ai.models.generateContent({
+    model: model,
+    contents: [{ role: "user", parts: [{ text: `${systemPrompt}\n\nUser Request: ${userInput}` }] }]
+  });
+
+  if (!response.text) throw new Error("No response generated");
+  return response.text.trim();
 };
