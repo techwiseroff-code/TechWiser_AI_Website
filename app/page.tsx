@@ -8,7 +8,7 @@ import { Sidebar } from '@/components/Sidebar';
 import { ChatInterface } from '@/components/ChatInterface';
 import { PreviewPanel } from '@/components/PreviewPanel';
 import { ToastContainer, Toast } from '@/components/Toast';
-import { generateCode, GeneratedFile } from '@/lib/gemini';
+import { generateCode, GeneratedFile } from '../lib/gemini';
 import { motion, AnimatePresence } from 'motion/react';
 import { Sparkles, Terminal, Code2, Eye, Maximize2, RefreshCcw, Copy, Download, Github, ExternalLink, AlertTriangle } from 'lucide-react';
 import { cn } from '@/lib/utils';
@@ -126,7 +126,7 @@ export default function Home() {
       // Auto-enhance prompt if toggled ON and it's not a tiny instruction (like "fix button")
       if (autoEnhance && message.length > 5 && message.length < 500 && !message.includes("Fix the following error")) {
         try {
-          const enhanced = await import('@/lib/gemini').then(m => m.enhancePrompt(message, {
+          const enhanced = await import('../lib/gemini').then(m => m.enhancePrompt(message, {
             geminiKey: useCustomGemini ? geminiKey : undefined,
             openRouterKey,
             model: selectedModel
@@ -159,7 +159,7 @@ export default function Home() {
       }
 
       // We store the description AND a summary of files in history for better long-term memory
-      const historyContent = `${result.description}\n\nFiles Updated: ${result.files.map(f => f.path).join(', ')}`;
+      const historyContent = `${result.description}\n\nFiles Updated: ${result.files.map((f: GeneratedFile) => f.path).join(', ')}`;
 
       const newHistory = [
         ...history,
@@ -171,7 +171,7 @@ export default function Home() {
         // Merge the AI's returned files with the existing files in the project
         // This ensures if the AI only outputs the fixed file, we don't delete the rest of the project.
         const mergedFiles = [...files];
-        result.files.forEach(newFile => {
+        result.files.forEach((newFile: GeneratedFile) => {
            const existingIdx = mergedFiles.findIndex(f => f.path === newFile.path);
            if (existingIdx >= 0) {
               mergedFiles[existingIdx] = newFile;
