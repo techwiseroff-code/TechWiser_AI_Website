@@ -122,7 +122,7 @@ export default function Home() {
 
     try {
       let finalPrompt = message;
-      
+
       // Auto-enhance prompt if toggled ON and it's not a tiny instruction (like "fix button")
       if (autoEnhance && message.length > 5 && message.length < 500 && !message.includes("Fix the following error")) {
         try {
@@ -140,9 +140,9 @@ export default function Home() {
 
       // Get history from current project if it exists
       const history = currentProject?.chatHistory || [];
-      
+
       // Build context of current files to provide to the AI
-      const fileContext = files.length > 0 
+      const fileContext = files.length > 0
         ? `\n\nCURRENT PROJECT CONTEXT:\n${files.map((f: GeneratedFile) => `File: ${f.path}\nContent:\n${f.content}`).join('\n\n')}\n`
         : "";
 
@@ -172,12 +172,12 @@ export default function Home() {
         // This ensures if the AI only outputs the fixed file, we don't delete the rest of the project.
         const mergedFiles = [...files];
         result.files.forEach((newFile: GeneratedFile) => {
-           const existingIdx = mergedFiles.findIndex(f => f.path === newFile.path);
-           if (existingIdx >= 0) {
-              mergedFiles[existingIdx] = newFile;
-           } else {
-              mergedFiles.push(newFile);
-           }
+          const existingIdx = mergedFiles.findIndex(f => f.path === newFile.path);
+          if (existingIdx >= 0) {
+            mergedFiles[existingIdx] = newFile;
+          } else {
+            mergedFiles.push(newFile);
+          }
         });
 
         // Update existing project
@@ -530,9 +530,9 @@ export default function Home() {
                   {/* Chat Interface - Sticky at bottom */}
                   <div className="absolute bottom-0 left-0 right-0 z-30 bg-gradient-to-t from-[#050505] via-[#050505] to-transparent pt-12 pb-4 md:pb-6 px-4 pointer-events-none">
                     <div className="max-w-4xl mx-auto pointer-events-auto">
-                      <ChatInterface 
-                        onSendMessage={handleSendMessage} 
-                        isLoading={isLoading} 
+                      <ChatInterface
+                        onSendMessage={handleSendMessage}
+                        isLoading={isLoading}
                         autoEnhance={autoEnhance}
                         onToggleEnhance={() => setAutoEnhance(!autoEnhance)}
                       />

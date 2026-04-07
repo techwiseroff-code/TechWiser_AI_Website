@@ -2,7 +2,7 @@ import { GoogleGenAI } from "@google/genai";
 import { GEMINI_MODELS } from "./openrouter";
 
 /* =========================
-   TYPES (FIXED)
+   TYPES
 ========================= */
 
 type ChatRole = "user" | "assistant" | "system";
@@ -29,32 +29,33 @@ export interface AIConfig {
 }
 
 /* =========================
-   SYSTEM PROMPT (IMPROVED)
+   SYSTEM PROMPT (STRICT)
 ========================= */
 
 const SYSTEM_INSTRUCTION = `
-You are TechWiser AI, an expert full-stack engineer.
+You are TechWiser AI, expert full-stack engineer.
 
-STRICT RULES:
-- Always return properly formatted code
-- Always follow Markdown format:
+OUTPUT FORMAT (STRICT):
 
 ### SUMMARY
-text
+Short summary
 
-### FILE: filename.tsx
+### FILE: path/to/file.tsx
 \`\`\`tsx
 code
 \`\`\`
 
-CRITICAL:
-- NEVER break syntax
-- ALWAYS escape quotes inside strings
-- ALWAYS use valid TypeScript/React code
+CRITICAL RULES:
+- NEVER generate duplicate files
+- NEVER generate both App.tsx and src/App.tsx
+- ONLY use ONE App file based on project structure
+- ALWAYS overwrite existing files (same path)
+- ALWAYS return valid TypeScript/React code
+- ALWAYS escape quotes properly
 `;
 
 /* =========================
-   ROLE NORMALIZER (FIX)
+   HELPERS
 ========================= */
 
 const normalizeRole = (role: string): ChatRole => {
@@ -62,56 +63,92 @@ const normalizeRole = (role: string): ChatRole => {
   return "user";
 };
 
+const normalizePath = (path: string): string => {
+  return path.trim().replace(/^\.\/+/, "").replace(/\\/g, "/");
+};
+
+const isAppFile = (path: string): boolean => {
+  const p = normalizePath(path).toLowerCase();
+  return p === "app.tsx" || p === "src/app.tsx";
+};
+
 /* =========================
-   PARSER (HARDENED)
+   VALIDATION
+========================= */
+
+function validateAndFixFiles(files: GeneratedFile[]): GeneratedFile[] {
+  const map = new Map<string, GeneratedFile>();
+
+  for (const file of files) {
+    const path = normalizePath(file.path);
+
+    // overwrite duplicates safely
+    map.set(path, {
+      path,
+      content: file.content.trim(),
+    });
+  }
+
+  const finalFiles = [...map.values()];
+
+  // ❗ CRITICAL: detect conflicting App.tsx
+  const appFiles = finalFiles
+    .map((f) => normalizePath(f.path).toLowerCase())
+    .filter((p) => p === "app.tsx" || p === "src/app.tsx");
+
+  const uniqueApp = new Set(appFiles);
+
+  if (uniqueApp.size > 1) {
+    throw new Error(
+      "❌ AI generated multiple App entry files (App.tsx conflict). Regenerate."
+    );
+  }
+
+  return finalFiles;
+}
+
+/* =========================
+   PARSER (STRICT)
 ========================= */
 
 function parseMarkdownResponse(content: string): GenerationResult {
   const result: GenerationResult = {
     files: [],
-    description: "Code generated successfully.",
+    description: "Generated successfully",
   };
 
   // Extract summary
-  const summaryMatch = content.match(/###\s*SUMMARY\s*\n([\s\S]*?)(?=###\s*FILE:|$)/i);
-  if (summaryMatch) {
+  const summaryMatch = content.match(
+    /###\s*SUMMARY\s*\n([\s\S]*?)(?=###\s*FILE:|$)/i
+  );
+  if (summaryMatch?.[1]) {
     result.description = summaryMatch[1].trim();
   }
 
   // Extract files
-  const fileRegex = /###\s*FILE:\s*([^\n]+)\n```[a-zA-Z]*\n([\s\S]*?)```/g;
-  let match;
+  const fileRegex =
+    /###\s*FILE:\s*([^\n]+)\n```[a-zA-Z]*\n([\s\S]*?)```/g;
+
+  let match: RegExpExecArray | null;
 
   while ((match = fileRegex.exec(content)) !== null) {
     result.files.push({
-      path: match[1].trim(),
-      content: sanitizeCode(match[2].trim()),
+      path: normalizePath(match[1]),
+      content: match[2].trim(),
     });
   }
 
   if (result.files.length === 0) {
-    throw new Error("AI response format invalid. No files found.");
+    throw new Error("❌ Invalid AI response: No files found");
   }
+
+  result.files = validateAndFixFiles(result.files);
 
   return result;
 }
 
 /* =========================
-   SANITIZER (VERY IMPORTANT)
-========================= */
-
-function sanitizeCode(code: string): string {
-  return code
-    // Fix unescaped quotes inside strings
-    .replace(/'([^']*?)'s/g, "'$1\\'s")
-    // Remove accidental double commas
-    .replace(/,,+/g, ",")
-    // Fix missing semicolons (basic)
-    .replace(/([^;\n])\n/g, "$1;\n");
-}
-
-/* =========================
-   OPENROUTER CALL
+   OPENROUTER
 ========================= */
 
 const callOpenRouter = async (
@@ -122,9 +159,7 @@ const callOpenRouter = async (
   const apiKey =
     config.openRouterKey || process.env.NEXT_PUBLIC_OPENROUTER_API_KEY;
 
-  if (!apiKey) {
-    throw new Error("OpenRouter API key missing");
-  }
+  if (!apiKey) throw new Error("OpenRouter API key missing");
 
   const messages: ChatMessage[] = [
     { role: "system", content: SYSTEM_INSTRUCTION },
@@ -148,8 +183,8 @@ const callOpenRouter = async (
   });
 
   if (!res.ok) {
-    const err = await res.text();
-    throw new Error("OpenRouter Error: " + err);
+    const text = await res.text();
+    throw new Error("OpenRouter Error: " + text);
   }
 
   const data = await res.json();
@@ -157,7 +192,7 @@ const callOpenRouter = async (
 };
 
 /* =========================
-   MAIN GENERATOR (FIXED)
+   MAIN GENERATOR
 ========================= */
 
 export const generateCode = async (
@@ -175,9 +210,7 @@ export const generateCode = async (
   const apiKey =
     config.geminiKey || process.env.NEXT_PUBLIC_GEMINI_API_KEY;
 
-  if (!apiKey) {
-    throw new Error("Gemini API key missing");
-  }
+  if (!apiKey) throw new Error("Gemini API key missing");
 
   const ai = new GoogleGenAI({ apiKey });
 
@@ -196,19 +229,14 @@ export const generateCode = async (
     },
   ];
 
-  try {
-    const res = await ai.models.generateContent({
-      model,
-      contents,
-    });
+  const res = await ai.models.generateContent({
+    model,
+    contents,
+  });
 
-    if (!res.text) throw new Error("Empty AI response");
+  if (!res.text) throw new Error("Empty Gemini response");
 
-    return parseMarkdownResponse(res.text);
-  } catch (err: any) {
-    console.error(err);
-    throw new Error(err.message || "Gemini failed");
-  }
+  return parseMarkdownResponse(res.text);
 };
 
 /* =========================
@@ -223,8 +251,8 @@ export const enhancePrompt = async (
   const isGemini = GEMINI_MODELS.some((m) => m.id === model);
 
   const system = `
-Expand the idea into a professional product description (100-150 words).
-Return only the paragraph.
+Expand this idea into a professional product description (100-150 words).
+Return only text.
 `;
 
   if (!isGemini) {
