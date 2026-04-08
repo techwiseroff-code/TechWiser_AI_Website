@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState, useRef, useEffect } from 'react';
+import 'regenerator-runtime/runtime';
 import { Mic, Send, Languages, Sparkles, Loader2, StopCircle, Zap } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { cn } from '@/lib/utils';
@@ -26,24 +27,37 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({
 
   useEffect(() => {
     if (typeof window !== 'undefined' && ('SpeechRecognition' in window || 'webkitSpeechRecognition' in window)) {
-      const SpeechRecognition = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
-      recognitionRef.current = new SpeechRecognition();
-      recognitionRef.current.continuous = false;
-      recognitionRef.current.interimResults = false;
+      try {
+        const SpeechRecognition = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
+        recognitionRef.current = new SpeechRecognition();
+        recognitionRef.current.continuous = false;
+        recognitionRef.current.interimResults = false;
 
-      recognitionRef.current.onresult = (event: any) => {
-        const transcript = event.results[0][0].transcript;
-        setInput((prev) => prev + (prev ? ' ' : '') + transcript);
-        setIsRecording(false);
-      };
+        recognitionRef.current.onresult = (event: any) => {
+          let transcript = '';
+          for (let i = event.resultIndex; i < event.results.length; ++i) {
+            transcript += event.results[i][0].transcript;
+          }
+          if (transcript) {
+            setInput((prev) => {
+              const trimmed = prev.trimEnd();
+              return trimmed ? `${trimmed} ${transcript}` : transcript;
+            });
+          }
+          setIsRecording(false);
+        };
 
-      recognitionRef.current.onerror = () => {
-        setIsRecording(false);
-      };
+        recognitionRef.current.onerror = (event: any) => {
+          console.error('Speech recognition error:', event.error);
+          setIsRecording(false);
+        };
 
-      recognitionRef.current.onend = () => {
-        setIsRecording(false);
-      };
+        recognitionRef.current.onend = () => {
+          setIsRecording(false);
+        };
+      } catch (e) {
+        console.error('Speech recognition initialization error:', e);
+      }
     }
   }, []);
 
@@ -54,16 +68,33 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({
         hi: 'hi-IN',
         mr: 'mr-IN'
       };
-      recognitionRef.current.lang = langMap[language];
+      recognitionRef.current.lang = langMap[language] || 'en-US';
     }
   }, [language]);
 
   const toggleRecording = () => {
     if (isRecording) {
-      recognitionRef.current?.stop();
+      if (recognitionRef.current) {
+        try {
+          recognitionRef.current.stop();
+        } catch (e) {
+          console.error('Error stopping speech recognition:', e);
+        }
+      }
+      setIsRecording(false);
     } else {
-      setIsRecording(true);
-      recognitionRef.current?.start();
+      if (!recognitionRef.current) {
+        alert('Voice input is not supported in your browser.');
+        return;
+      }
+      try {
+        recognitionRef.current.start();
+        setIsRecording(true);
+      } catch (e) {
+        console.error('Error starting speech recognition:', e);
+        // If it's already started, just ensure the UI matches the state
+        setIsRecording(true);
+      }
     }
   };
 
